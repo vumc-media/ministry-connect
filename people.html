@@ -1,628 +1,170 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>People Directory | Ministry Connect</title>
-  <style>
-    :root {
-      --navy: #16324f;
-      --blue: #2c7be5;
-      --teal: #1fb6aa;
-      --gold: #f2c94c;
-      --bg: #eef3f8;
-      --card: rgba(255,255,255,0.95);
-      --text: #1f2937;
-      --muted: #667085;
-      --border: rgba(15, 23, 42, 0.10);
-      --shadow: 0 18px 45px rgba(16, 24, 40, 0.10);
-      --radius: 24px;
-      --max: 1080px;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>People Directory | Ministry Connect</title>
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+<style>
+body {
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#eef3f9;
+}
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(44,123,229,.10), transparent 28%),
-        radial-gradient(circle at top right, rgba(31,182,170,.12), transparent 32%),
-        linear-gradient(180deg, #eef3f9 0%, #f6f8fb 45%, #edf2f7 100%);
-    }
+.wrap {
+  max-width:900px;
+  margin:40px auto;
+  padding:20px;
+}
 
-    a { color: inherit; text-decoration: none; }
+.search {
+  display:flex;
+  gap:10px;
+  background:#fff;
+  padding:14px;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,.05);
+}
 
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      backdrop-filter: blur(14px);
-      background: rgba(255,255,255,0.82);
-      border-bottom: 1px solid rgba(22,50,79,.08);
-    }
+.search input {
+  flex:1;
+  border:none;
+  font-size:16px;
+  outline:none;
+}
 
-    .topbar-inner,
-    .hero-inner,
-    .section {
-      width: min(var(--max), calc(100% - 32px));
-      margin: 0 auto;
-    }
+.grid {
+  margin-top:20px;
+  display:grid;
+  gap:12px;
+}
 
-    .topbar-inner {
-      min-height: 74px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
+.card {
+  background:#fff;
+  padding:14px;
+  border-radius:14px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.05);
+}
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
-    }
+.avatar {
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  background:#2c7be5;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+}
 
-    .brand-mark {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--blue), var(--teal));
-      display: grid;
-      place-items: center;
-      color: #fff;
-      font-weight: 700;
-      box-shadow: 0 10px 24px rgba(44,123,229,.22);
-      flex: 0 0 auto;
-    }
+.name {
+  font-weight:bold;
+}
 
-    .brand-kicker {
-      font-size: 12px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
+.muted {
+  color:#666;
+  font-size:14px;
+}
 
-    .brand-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--navy);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .nav a {
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 15px;
-      color: var(--navy);
-      transition: .2s ease;
-    }
-
-    .nav a:hover,
-    .nav a:focus {
-      background: rgba(44,123,229,.08);
-      outline: none;
-    }
-
-    .nav .cta {
-      background: var(--gold);
-      color: #1b1b1b;
-      font-weight: 700;
-      box-shadow: 0 10px 24px rgba(242,201,76,.28);
-    }
-
-    .hero {
-      padding: 28px 0 20px;
-    }
-
-    .hero-shell {
-      background: linear-gradient(135deg, rgba(44,123,229,.95), rgba(74,108,247,.90) 45%, rgba(31,182,170,.88));
-      border-radius: 32px;
-      box-shadow: var(--shadow);
-      padding: 42px 28px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,.18);
-      position: relative;
-    }
-
-    .hero-shell::before,
-    .hero-shell::after {
-      content: "";
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,.10);
-      pointer-events: none;
-    }
-
-    .hero-shell::before {
-      width: 260px;
-      height: 260px;
-      left: -30px;
-      bottom: -130px;
-    }
-
-    .hero-shell::after {
-      width: 220px;
-      height: 220px;
-      right: -30px;
-      top: -60px;
-    }
-
-    .hero-inner {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 24px;
-      align-items: center;
-    }
-
-    .hero-copy h1 {
-      margin: 0 0 12px;
-      color: #fff;
-      font-size: clamp(2rem, 4vw, 3.4rem);
-      line-height: 1.03;
-      letter-spacing: -.02em;
-    }
-
-    .hero-copy p {
-      margin: 0;
-      color: rgba(255,255,255,.92);
-      line-height: 1.7;
-      font-size: 1rem;
-      max-width: 620px;
-    }
-
-    .hero-badges {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.16);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,.18);
-      font-size: 14px;
-    }
-
-    .hero-panel {
-      background: rgba(255,255,255,.14);
-      border: 1px solid rgba(255,255,255,.22);
-      border-radius: 22px;
-      padding: 22px;
-      color: #fff;
-      backdrop-filter: blur(8px);
-    }
-
-    .hero-panel h2 {
-      margin: 0 0 10px;
-      font-size: 1.15rem;
-    }
-
-    .hero-panel li {
-      line-height: 1.65;
-      color: rgba(255,255,255,.92);
-      font-size: .96rem;
-    }
-
-    .hero-panel ul {
-      margin: 12px 0 0;
-      padding-left: 18px;
-    }
-
-    .section {
-      padding: 0 0 24px;
-    }
-
-    .section-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px;
-    }
-
-    .search-wrap {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      background: #fff;
-      border: 1px solid rgba(15,23,42,.10);
-      border-radius: 16px;
-      padding: 12px 14px;
-    }
-
-    .search-wrap input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 16px;
-      font-family: inherit;
-    }
-
-    .pill {
-      background: rgba(44,123,229,.08);
-      border: 1px solid rgba(44,123,229,.14);
-      border-radius: 999px;
-      padding: 7px 12px;
-      font-size: 13px;
-      color: var(--blue);
-      display: inline-block;
-      font-weight: 700;
-      margin-top: 12px;
-    }
-
-    .muted { color: var(--muted); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .card {
-      background: #fff;
-      border: 1px solid rgba(15,23,42,.08);
-      border-radius: 18px;
-      padding: 14px;
-      display: grid;
-      grid-template-columns: 58px 1fr;
-      gap: 14px;
-      box-shadow: 0 8px 20px rgba(15,23,42,.04);
-    }
-
-    .avatar {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(44,123,229,.18), rgba(31,182,170,.28));
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      color: var(--navy);
-      overflow: hidden;
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
-
-    .name {
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
-    .rows {
-      display: grid;
-      gap: 6px;
-      font-size: .95rem;
-    }
-
-    .rows a {
-      color: var(--blue);
-      text-decoration: none;
-    }
-
-    .rows a:hover { text-decoration: underline; }
-
-    .center {
-      text-align: center;
-      margin-top: 24px;
-      padding: 18px 0;
-    }
-
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 3px solid rgba(15,23,42,.14);
-      border-top-color: var(--blue);
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 860px) {
-      .hero-inner {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .topbar-inner {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 14px 0;
-      }
-
-      .nav {
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .hero-shell,
-      .section-card {
-        padding: 22px;
-        border-radius: 24px;
-      }
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a href="index.html" class="brand" aria-label="Ministry Connect Home">
-        <div class="brand-mark">MC</div>
-        <div>
-          <div class="brand-kicker">VUMC Workspace</div>
-          <div class="brand-title">Ministry Connect</div>
-        </div>
-      </a>
 
-      <nav class="nav" aria-label="Primary">
-        <a href="index.html">Home</a>
-        <a href="people.html">People</a>
-        <a href="index.html#tools" class="cta">Back to Tools</a>
-      </nav>
-    </div>
-  </header>
+<div class="wrap">
+  <h2>People Directory</h2>
 
-  <main>
-    <section class="hero">
-      <div class="hero-inner hero-shell">
-        <div class="hero-copy">
-          <div class="hero-badges">
-            <span class="hero-badge">People Directory</span>
-            <span class="hero-badge">PCO Connected</span>
-            <span class="hero-badge">Front Office Workflow</span>
-          </div>
-          <h1>People Directory</h1>
-          <p>
-            Search by name or email to quickly locate people records. Results can show contact details,
-            phone number, mailing address, and photo when available.
-          </p>
-        </div>
+  <div class="search">
+    <input id="q" placeholder="Search name or email..." />
+    <span id="status"></span>
+  </div>
 
-        <aside class="hero-panel" aria-label="How to use">
-          <h2>How to use it</h2>
-          <ul>
-            <li>Start typing a name or email address.</li>
-            <li>Use at least 2 characters for the search.</li>
-            <li>Click email, phone, or address links to open the related app.</li>
-            <li>Photos appear when available in Planning Center.</li>
-          </ul>
-        </aside>
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="muted">Start typing to search...</div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybKVCCW7_Yn2ieND2AfvTlUIb6q96YjWzuKYRMXegLhCFH_htIwMZnoDv47JY9dDIL/exec";
+
+let timer;
+
+function initials(name){
+  return (name||"").split(" ").map(x=>x[0]).join("").toUpperCase();
+}
+
+async function search(q){
+  document.getElementById("status").textContent = "Searching...";
+
+  try{
+    const url = SCRIPT_URL +
+      "?action=searchPeople&q=" + encodeURIComponent(q);
+
+    const res = await fetch(url);
+    const text = await res.text();
+
+    console.log("Response:", text);
+
+    const data = JSON.parse(text);
+
+    render(data);
+
+  }catch(err){
+    console.error(err);
+    document.getElementById("empty").textContent = "Error loading results";
+  }
+
+  document.getElementById("status").textContent = "";
+}
+
+function render(data){
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+
+  grid.innerHTML = "";
+
+  if(!data.rows || data.rows.length === 0){
+    empty.style.display="block";
+    empty.textContent="No results";
+    return;
+  }
+
+  empty.style.display="none";
+
+  data.rows.forEach(p=>{
+    const card = document.createElement("div");
+    card.className="card";
+
+    card.innerHTML = `
+      <div class="avatar">${initials(p.name)}</div>
+      <div>
+        <div class="name">${p.name}</div>
+        <div class="muted">${p.email || ""}</div>
       </div>
-    </section>
+    `;
 
-    <section class="section">
-      <div class="section-card">
-        <div class="search-wrap">
-          <input id="q" placeholder="e.g., John, Smith, john@domain.com" autocomplete="off" />
-          <span id="status" class="muted"></span>
-        </div>
+    grid.appendChild(card);
+  });
+}
 
-        <div class="pill" id="countPill" style="display:none;"></div>
+document.getElementById("q").addEventListener("input", function(e){
+  const val = e.target.value.trim();
 
-        <div id="grid" class="grid" aria-live="polite"></div>
+  clearTimeout(timer);
 
-        <div id="empty" class="center muted">
-          Start typing above to search the directory.
-        </div>
-      </div>
-    </section>
-  </main>
+  if(val.length < 2){
+    document.getElementById("grid").innerHTML="";
+    document.getElementById("empty").style.display="block";
+    return;
+  }
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybKVCCW7_Yn2ieND2AfvTlUIb6q96YjWzuKYRMXegLhCFH_htIwMZnoDv47JY9dDIL/exec";
+  timer = setTimeout(()=>search(val), 300);
+});
+</script>
 
-    let pending = null;
-    let lastQuery = "";
-
-    const qInput = document.getElementById("q");
-    const grid = document.getElementById("grid");
-    const empty = document.getElementById("empty");
-    const countPill = document.getElementById("countPill");
-    const status = document.getElementById("status");
-
-    function initials(name) {
-      return (name || "").trim().split(/\s+/).slice(0,2).map(p => p[0]?.toUpperCase() || "").join("");
-    }
-
-    function escapeHtml(s) {
-      const d = document.createElement("div");
-      d.textContent = s || "";
-      return d.innerHTML;
-    }
-
-    function linkEmail(email) {
-      return email ? `<a href="mailto:${encodeURIComponent(email)}">${escapeHtml(email)}</a>` : "—";
-    }
-
-    function linkPhone(number) {
-      const digits = (number || "").replace(/[^\d+]/g, "");
-      return number ? `<a href="tel:${digits}">${escapeHtml(number)}</a>` : "—";
-    }
-
-    function linkAddress(addr) {
-      return addr
-        ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener noreferrer">${escapeHtml(addr)}</a>`
-        : "—";
-    }
-
-    function setStatusLoading(loading) {
-      if (loading) {
-        status.innerHTML = '<span class="spinner" title="Searching…"></span>';
-      } else {
-        status.textContent = "";
-      }
-    }
-
-    function ensureScriptUrl() {
-      if (!SCRIPT_URL.trim()) {
-        grid.innerHTML = "";
-        countPill.style.display = "none";
-        empty.style.display = "block";
-        empty.textContent = "People Directory script URL is missing.";
-        setStatusLoading(false);
-        return false;
-      }
-      return true;
-    }
-
-    async function searchNow(q) {
-      if (!ensureScriptUrl()) return;
-
-      setStatusLoading(true);
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'searchPeople',
-            q: q,
-            perPage: 50
-          })
-        });
-
-        const text = await res.text();
-        console.log("People response:", text);
-
-        if (!text.trim()) {
-          throw new Error("Empty response from Apps Script");
-        }
-
-        const json = JSON.parse(text);
-        setStatusLoading(false);
-
-        if (json && json.ok === false) {
-          grid.innerHTML = "";
-          empty.style.display = "block";
-          empty.textContent = json.error || 'Error searching.';
-          countPill.style.display = "none";
-          return;
-        }
-
-        render(json);
-      } catch (err) {
-        setStatusLoading(false);
-        grid.innerHTML = "";
-        empty.style.display = "block";
-        empty.textContent = "Error searching. " + (err?.message || "");
-        countPill.style.display = "none";
-        console.error(err);
-      }
-    }
-
-    function render(result) {
-      const rows = result?.rows || [];
-      grid.innerHTML = "";
-      if (!rows.length) {
-        countPill.style.display = "none";
-        empty.style.display = "block";
-        empty.textContent = lastQuery.length < 2
-          ? "Type at least 2 characters to search."
-          : "No results. Try a different name or email.";
-        return;
-      }
-
-      empty.style.display = "none";
-      countPill.style.display = "inline-block";
-      countPill.textContent = `${rows.length} result${rows.length !== 1 ? "s" : ""}`;
-
-      rows.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const ava = document.createElement("div");
-        ava.className = "avatar";
-        if (p.avatar) {
-          const img = document.createElement("img");
-          img.src = p.avatar;
-          img.alt = p.name + " photo";
-          ava.appendChild(img);
-        } else {
-          ava.textContent = initials(p.name);
-        }
-
-        const body = document.createElement("div");
-        const name = document.createElement("div");
-        name.className = "name";
-        name.textContent = p.name;
-
-        const rowsDiv = document.createElement("div");
-        rowsDiv.className = "rows";
-        rowsDiv.innerHTML = `
-          <div class="muted">✉︎ ${linkEmail(p.email)}</div>
-          <div class="muted">☎︎ ${linkPhone(p.phone)}</div>
-          <div class="muted">🏠 ${linkAddress(p.address)}</div>
-        `;
-
-        body.appendChild(name);
-        body.appendChild(rowsDiv);
-        card.appendChild(ava);
-        card.appendChild(body);
-        grid.appendChild(card);
-      });
-    }
-
-    function debouncedSearch() {
-      const q = qInput.value.trim();
-      lastQuery = q;
-      if (pending) clearTimeout(pending);
-
-      if (q.length < 2) {
-        grid.innerHTML = "";
-        countPill.style.display = "none";
-        empty.style.display = "block";
-        empty.textContent = "Type at least 2 characters to search.";
-        setStatusLoading(false);
-        return;
-      }
-
-      setStatusLoading(true);
-      pending = setTimeout(() => searchNow(q), 350);
-    }
-
-    qInput.addEventListener("input", debouncedSearch);
-    qInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        if (pending) clearTimeout(pending);
-        debouncedSearch();
-      }
-    });
-  </script>
 </body>
 </html>
