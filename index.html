@@ -139,6 +139,12 @@
       box-shadow: 0 10px 24px rgba(242,201,76,.28);
     }
 
+    .logout-btn {
+      background: rgba(22,50,79,.08);
+      color: var(--navy);
+      font-weight: 700;
+    }
+
     .hero {
       position: relative;
       overflow: hidden;
@@ -526,6 +532,109 @@
       display: block;
     }
 
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, rgba(22,50,79,.96), rgba(44,123,229,.94), rgba(31,182,170,.92));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .gate-card {
+      width: min(460px, 100%);
+      background: rgba(255,255,255,.96);
+      border-radius: 28px;
+      box-shadow: 0 28px 60px rgba(0,0,0,.18);
+      padding: 28px;
+      text-align: center;
+    }
+
+    .gate-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 24px;
+      margin: 0 auto 18px;
+    }
+
+    .gate-card h2 {
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-size: 2rem;
+    }
+
+    .gate-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .gate-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(15,23,42,.14);
+      font: inherit;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 14px;
+    }
+
+    .gate-input:focus {
+      border-color: rgba(44,123,229,.55);
+      box-shadow: 0 0 0 4px rgba(44,123,229,.10);
+    }
+
+    .gate-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .gate-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .gate-enter {
+      background: var(--gold);
+      color: #1b1b1b;
+    }
+
+    .gate-clear {
+      background: rgba(22,50,79,.08);
+      color: var(--navy);
+    }
+
+    .gate-error {
+      margin-top: 14px;
+      min-height: 22px;
+      color: #b00020;
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
+    .hidden-until-auth {
+      display: none;
+    }
+
+    .hidden-until-auth.show {
+      display: block;
+    }
+
     @media (max-width: 1180px) {
       .grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -578,201 +687,276 @@
       .workspace-card {
         min-height: auto;
       }
+
+      .gate-card {
+        padding: 22px;
+      }
     }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a href="#home" class="brand" aria-label="Ministry Connect Home">
-        <div class="brand-mark">MC</div>
-        <div class="brand-text">
-          <div class="brand-kicker">VUMC Workspace</div>
-          <div class="brand-title">Ministry Connect</div>
-        </div>
-      </a>
-
-      <nav class="nav" aria-label="Primary">
-        <a href="#home">Home</a>
-        <a href="#tools">Tools</a>
-        <a href="#about">About</a>
-        <button type="button" class="cta" id="quickAccessBtn">Quick Access</button>
-      </nav>
+  <div id="loginGate" class="gate">
+    <div class="gate-card">
+      <div class="gate-logo">MC</div>
+      <h2>Ministry Connect</h2>
+      <p>Staff Access</p>
+      <p>Enter the office password to open the workspace.</p>
+      <input id="passwordInput" class="gate-input" type="password" placeholder="Enter password" />
+      <div class="gate-actions">
+        <button id="enterBtn" class="gate-btn gate-enter" type="button">Enter Workspace</button>
+        <button id="clearBtn" class="gate-btn gate-clear" type="button">Clear</button>
+      </div>
+      <div id="gateError" class="gate-error"></div>
     </div>
-  </header>
+  </div>
 
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-inner hero-shell">
-        <div class="hero-copy">
-          <div class="hero-badges">
-            <span class="hero-badge">Front Office Workspace</span>
-            <span class="hero-badge">Volunteer-Friendly</span>
-            <span class="hero-badge">Ready to Use</span>
+  <div id="workspaceShell" class="hidden-until-auth">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a href="#home" class="brand" aria-label="Ministry Connect Home">
+          <div class="brand-mark">MC</div>
+          <div class="brand-text">
+            <div class="brand-kicker">VUMC Workspace</div>
+            <div class="brand-title">Ministry Connect</div>
+          </div>
+        </a>
+
+        <nav class="nav" aria-label="Primary">
+          <a href="#home">Home</a>
+          <a href="#tools">Tools</a>
+          <a href="#about">About</a>
+          <button type="button" class="cta" id="quickAccessBtn">Quick Access</button>
+          <button type="button" class="logout-btn" id="logoutBtn">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="hero-inner hero-shell">
+          <div class="hero-copy">
+            <div class="hero-badges">
+              <span class="hero-badge">Front Office Workspace</span>
+              <span class="hero-badge">Volunteer-Friendly</span>
+              <span class="hero-badge">Ready to Use</span>
+            </div>
+
+            <h1>Ministry Connect</h1>
+            <p>
+              A simple, organized workspace for the everyday tools your office team uses most.
+              Attendance, calendar access, event creation, people lookup, and receipt printing are all available in one place,
+              giving your team a clear and welcoming environment to serve and stay organized.
+            </p>
+
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#tools">Open Workspace Tools</a>
+              <a class="btn btn-secondary" href="#about">Learn More</a>
+            </div>
           </div>
 
-          <h1>Ministry Connect</h1>
-          <p>
-            A simple, organized workspace for the everyday tools your office team uses most.
-            Attendance, calendar access, event creation, people lookup, and receipt printing are all available in one place,
-            giving your team a clear and welcoming environment to serve and stay organized.
+          <aside class="hero-panel" aria-label="Workspace overview">
+            <h2>One place for everyday office tools</h2>
+            <p>
+              Ministry Connect gives your volunteer office team a simple, welcoming place to access the tools they use most.
+              Everything is organized in one place, making it easy to find what you need without confusion or clutter.
+            </p>
+
+            <div class="panel-list">
+              <div class="panel-item">
+                <div class="panel-icon">✓</div>
+                <div>
+                  <strong>Simple access</strong>
+                  <span>Open the tools you need from one clean homepage without digging through multiple pages.</span>
+                </div>
+              </div>
+              <div class="panel-item">
+                <div class="panel-icon">🗂</div>
+                <div>
+                  <strong>Organized workflow</strong>
+                  <span>Attendance, calendar, events, people, and receipts are all available in one easy-to-use workspace.</span>
+                </div>
+              </div>
+              <div class="panel-item">
+                <div class="panel-icon">❤</div>
+                <div>
+                  <strong>Made for your team</strong>
+                  <span>Built to feel friendly and approachable for volunteers serving in the church office.</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="about">
+        <div class="section-card">
+          <span class="eyebrow">Welcome</span>
+          <h2>Built for the VUMC office team</h2>
+          <p class="lead">
+            This workspace provides a clean, organized starting point for the VUMC office team.
+            Each tool has its own dedicated page, allowing for a smoother workflow and a more consistent experience across attendance, calendar access, event creation, people, and receipts.
           </p>
 
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#tools">Open Workspace Tools</a>
-            <a class="btn btn-secondary" href="#about">Learn More</a>
+          <div class="quick-grid">
+            <div class="quick-box">
+              <h3>Welcoming and clear</h3>
+              <p>Give volunteers and office helpers a front page that feels simple, attractive, and easy to understand at a glance.</p>
+            </div>
+            <div class="quick-box">
+              <h3>Connected tools</h3>
+              <p>Each page is designed to focus on one task, helping your team stay organized without unnecessary clutter or distractions.</p>
+            </div>
+            <div class="quick-box">
+              <h3>Consistent workflow</h3>
+              <p>From people records to attendance and event creation, the workspace now functions as one connected internal system.</p>
+            </div>
+          </div>
+
+          <div class="access-note">
+            This workspace uses a shared office password for volunteer staff access. For stronger long-term protection, you could later move to individual user logins.
           </div>
         </div>
+      </section>
 
-        <aside class="hero-panel" aria-label="Workspace overview">
-          <h2>One place for everyday office tools</h2>
-          <p>
-            Ministry Connect gives your volunteer office team a simple, welcoming place to access the tools they use most.
-            Everything is organized in one place, making it easy to find what you need without confusion or clutter.
+      <section class="section" id="tools">
+        <div class="section-card">
+          <span class="eyebrow">Workspace Tools</span>
+          <h2>Choose what you need</h2>
+          <p class="lead">
+            These tools are ready to use. Each card opens a dedicated page designed to keep tasks simple, clear, and efficient for your office team.
           </p>
 
-          <div class="panel-list">
-            <div class="panel-item">
-              <div class="panel-icon">✓</div>
+          <div class="grid">
+            <a href="attendance.html" class="workspace-card" aria-label="Attendance tools">
               <div>
-                <strong>Simple access</strong>
-                <span>Open the tools you need from one clean homepage without digging through multiple pages.</span>
+                <div class="card-icon icon-attendance">✓</div>
+                <h3>Attendance</h3>
+                <p>Open attendance forms, log records, and access service check-in tools for volunteers and office staff.</p>
               </div>
-            </div>
-            <div class="panel-item">
-              <div class="panel-icon">🗂</div>
+              <span class="card-link">Open attendance →</span>
+            </a>
+
+            <a href="calendar.html" class="workspace-card" aria-label="Calendar tools">
               <div>
-                <strong>Organized workflow</strong>
-                <span>Attendance, calendar, events, people, and receipts are all available in one easy-to-use workspace.</span>
+                <div class="card-icon icon-calendar">🗓</div>
+                <h3>Calendar</h3>
+                <p>View the church calendar in one clean place and quickly access upcoming ministry schedules and events.</p>
               </div>
-            </div>
-            <div class="panel-item">
-              <div class="panel-icon">❤</div>
+              <span class="card-link">Open calendar →</span>
+            </a>
+
+            <a href="event-creator.html" class="workspace-card" aria-label="Event creator tools">
               <div>
-                <strong>Made for your team</strong>
-                <span>Built to feel friendly and approachable for volunteers serving in the church office.</span>
+                <div class="card-icon icon-events">✚</div>
+                <h3>Event Creator</h3>
+                <p>Create a new Planning Center calendar event or update an existing event from a simple office form.</p>
               </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
+              <span class="card-link">Open event creator →</span>
+            </a>
 
-    <section class="section" id="about">
-      <div class="section-card">
-        <span class="eyebrow">Welcome</span>
-        <h2>Built for the VUMC office team</h2>
-        <p class="lead">
-          This workspace provides a clean, organized starting point for the VUMC office team.
-          Each tool has its own dedicated page, allowing for a smoother workflow and a more consistent experience across attendance, calendar access, event creation, people, and receipts.
-        </p>
+            <a href="people.html" class="workspace-card" aria-label="People search tools">
+              <div>
+                <div class="card-icon icon-people">👥</div>
+                <h3>People</h3>
+                <p>Search people records from Planning Center through a secure interface without exposing secret keys in the browser.</p>
+              </div>
+              <span class="card-link">Search people →</span>
+            </a>
 
-        <div class="quick-grid">
-          <div class="quick-box">
-            <h3>Welcoming and clear</h3>
-            <p>Give volunteers and office helpers a front page that feels simple, attractive, and easy to understand at a glance.</p>
-          </div>
-          <div class="quick-box">
-            <h3>Connected tools</h3>
-            <p>Each page is designed to focus on one task, helping your team stay organized without unnecessary clutter or distractions.</p>
-          </div>
-          <div class="quick-box">
-            <h3>Consistent workflow</h3>
-            <p>From people records to attendance and event creation, the workspace now functions as one connected internal system.</p>
+            <a href="receipt.html" class="workspace-card" aria-label="Receipt tool">
+              <div>
+                <div class="card-icon icon-receipts">🧾</div>
+                <h3>Donation / In-Kind Receipt</h3>
+                <p>Create, email, and print donation receipts for office records from a cleaner, easier office workflow.</p>
+              </div>
+              <span class="card-link">Open receipt tool →</span>
+            </a>
           </div>
         </div>
+      </section>
 
-        <div class="access-note">
-          Staff-only access can be added later with a password gate, Netlify Identity, or Google sign-in protection depending on how secure and simple you want the experience to be.
+      <section class="section" id="quickAccessSection">
+        <div class="section-card">
+          <span class="eyebrow">Quick Access</span>
+          <h2>Jump straight to a task</h2>
+          <p class="lead">
+            Use these quick links when you want to go directly to the page you need without scrolling through the dashboard.
+          </p>
+
+          <div class="quick-links">
+            <a href="attendance.html">Attendance</a>
+            <a href="calendar.html">Calendar</a>
+            <a href="event-creator.html">Event Creator</a>
+            <a href="people.html">People</a>
+            <a href="receipt.html">Receipt Tool</a>
+          </div>
         </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        Ministry Connect for Versailles UMC · Future home: <a href="https://workspace.versaillesumc.org/">workspace.versaillesumc.org</a>
       </div>
-    </section>
-
-    <section class="section" id="tools">
-      <div class="section-card">
-        <span class="eyebrow">Workspace Tools</span>
-        <h2>Choose what you need</h2>
-        <p class="lead">
-          These tools are ready to use. Each card opens a dedicated page designed to keep tasks simple, clear, and efficient for your office team.
-        </p>
-
-        <div class="grid">
-          <a href="attendance.html" class="workspace-card" aria-label="Attendance tools">
-            <div>
-              <div class="card-icon icon-attendance">✓</div>
-              <h3>Attendance</h3>
-              <p>Open attendance forms, log records, and access service check-in tools for volunteers and office staff.</p>
-            </div>
-            <span class="card-link">Open attendance →</span>
-          </a>
-
-          <a href="calendar.html" class="workspace-card" aria-label="Calendar tools">
-            <div>
-              <div class="card-icon icon-calendar">🗓</div>
-              <h3>Calendar</h3>
-              <p>View the church calendar in one clean place and quickly access upcoming ministry schedules and events.</p>
-            </div>
-            <span class="card-link">Open calendar →</span>
-          </a>
-
-          <a href="event-creator.html" class="workspace-card" aria-label="Event creator tools">
-            <div>
-              <div class="card-icon icon-events">✚</div>
-              <h3>Event Creator</h3>
-              <p>Create a new Planning Center calendar event or update an existing event from a simple office form.</p>
-            </div>
-            <span class="card-link">Open event creator →</span>
-          </a>
-
-          <a href="people.html" class="workspace-card" aria-label="People search tools">
-            <div>
-              <div class="card-icon icon-people">👥</div>
-              <h3>People</h3>
-              <p>Search people records from Planning Center through a secure interface without exposing secret keys in the browser.</p>
-            </div>
-            <span class="card-link">Search people →</span>
-          </a>
-
-          <a href="receipt.html" class="workspace-card" aria-label="Receipt tool">
-            <div>
-              <div class="card-icon icon-receipts">🧾</div>
-              <h3>Donation / In-Kind Receipt</h3>
-              <p>Create, email, and print donation receipts for office records from a cleaner, easier office workflow.</p>
-            </div>
-            <span class="card-link">Open receipt tool →</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="quickAccessSection">
-      <div class="section-card">
-        <span class="eyebrow">Quick Access</span>
-        <h2>Jump straight to a task</h2>
-        <p class="lead">
-          Use these quick links when you want to go directly to the page you need without scrolling through the dashboard.
-        </p>
-
-        <div class="quick-links">
-          <a href="attendance.html">Attendance</a>
-          <a href="calendar.html">Calendar</a>
-          <a href="event-creator.html">Event Creator</a>
-          <a href="people.html">People</a>
-          <a href="receipt.html">Receipt Tool</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-      Ministry Connect for Versailles UMC · Future home: <a href="https://workspace.versaillesumc.org/">workspace.versaillesumc.org</a>
-    </div>
-  </footer>
+    </footer>
+  </div>
 
   <script>
+    const OFFICE_PASSWORD = 'vumc-office';
+    const ACCESS_KEY = 'ministry_connect_access';
+
+    const loginGate = document.getElementById('loginGate');
+    const workspaceShell = document.getElementById('workspaceShell');
+    const passwordInput = document.getElementById('passwordInput');
+    const gateError = document.getElementById('gateError');
+    const enterBtn = document.getElementById('enterBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const quickBtn = document.getElementById('quickAccessBtn');
     const quickSection = document.getElementById('quickAccessSection');
+
+    function openWorkspace() {
+      loginGate.style.display = 'none';
+      workspaceShell.classList.add('show');
+    }
+
+    function requireLogin() {
+      loginGate.style.display = 'flex';
+      workspaceShell.classList.remove('show');
+      passwordInput.value = '';
+      gateError.textContent = '';
+    }
+
+    function checkPassword() {
+      const input = passwordInput.value.trim();
+      if (input === OFFICE_PASSWORD) {
+        localStorage.setItem(ACCESS_KEY, 'granted');
+        openWorkspace();
+      } else {
+        gateError.textContent = 'Incorrect password. Please try again.';
+      }
+    }
+
+    function logoutWorkspace() {
+      localStorage.removeItem(ACCESS_KEY);
+      quickSection.classList.remove('show');
+      requireLogin();
+    }
+
+    enterBtn.addEventListener('click', checkPassword);
+    clearBtn.addEventListener('click', function () {
+      passwordInput.value = '';
+      gateError.textContent = '';
+      passwordInput.focus();
+    });
+
+    passwordInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        checkPassword();
+      }
+    });
+
+    logoutBtn.addEventListener('click', logoutWorkspace);
 
     quickBtn.addEventListener('click', function () {
       quickSection.classList.toggle('show');
@@ -780,6 +964,12 @@
         quickSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
+
+    if (localStorage.getItem(ACCESS_KEY) === 'granted') {
+      openWorkspace();
+    } else {
+      requireLogin();
+    }
   </script>
 </body>
 </html>
