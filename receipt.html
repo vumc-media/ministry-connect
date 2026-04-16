@@ -552,7 +552,7 @@
   </footer>
 
   <script>
-    const SCRIPT_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbwnWyq-GQrEsVez7V2YMqYWjqtmv2p4n-oQFOpMKeo2FWsPJP8THZbvjDKQL8Ocs5WQ/exec";
 
     const methodEl = document.getElementById('payment_method');
     const checkWrap = document.getElementById('checkWrap');
@@ -574,8 +574,8 @@
     async function handleSubmit(e) {
       e.preventDefault();
 
-      if (SCRIPT_URL === "PASTE_YOUR_WEB_APP_URL_HERE") {
-        statusEl.innerHTML = '<span class="err">Paste your deployed Apps Script URL into SCRIPT_URL before publishing this page.</span>';
+      if (SCRIPT_URL === "") {
+        statusEl.innerHTML = '<span class="err">The Apps Script URL is missing from this page. Add it to the SCRIPT_URL constant before publishing.</span>';
         return;
       }
 
@@ -618,8 +618,8 @@
     }
 
     printNow.addEventListener('click', () => {
-      if (SCRIPT_URL === "PASTE_YOUR_WEB_APP_URL_HERE") {
-        statusEl.innerHTML = '<span class="err">Paste your deployed Apps Script URL into SCRIPT_URL before using print preview.</span>';
+      if (SCRIPT_URL === "") {
+        statusEl.innerHTML = '<span class="err">The Apps Script URL is missing from this page. Add it to the SCRIPT_URL constant before using print preview.</span>';
         return;
       }
 
