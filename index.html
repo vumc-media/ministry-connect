@@ -4,176 +4,704 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ministry Connect | VUMC Workspace</title>
-
   <style>
     :root {
-      --navy:#16324f;
-      --blue:#2c7be5;
-      --teal:#1fb6aa;
-      --gold:#f2c94c;
-      --bg:#eef3f8;
-      --card:rgba(255,255,255,0.95);
-      --text:#1f2937;
-      --muted:#667085;
-      --border:rgba(15,23,42,.1);
-      --shadow:0 18px 45px rgba(16,24,40,.1);
-      --radius:24px;
-      --max:1100px;
+      --navy: #16324f;
+      --blue: #2c7be5;
+      --teal: #1fb6aa;
+      --gold: #f2c94c;
+      --bg: #f4f6f9;
+      --card: rgba(255,255,255,0.88);
+      --text: #1f2937;
+      --muted: #667085;
+      --shadow: 0 18px 45px rgba(16, 24, 40, 0.12);
+      --radius: 24px;
+      --radius-sm: 18px;
+      --max: 1220px;
     }
 
-    *{box-sizing:border-box}
+    * { box-sizing: border-box; }
 
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      color:var(--text);
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
       background:
         radial-gradient(circle at top left, rgba(44,123,229,.10), transparent 28%),
         radial-gradient(circle at top right, rgba(31,182,170,.12), transparent 32%),
-        linear-gradient(180deg,#eef3f9 0%,#f6f8fb 45%,#edf2f7 100%);
+        linear-gradient(180deg, #eef3f9 0%, #f6f8fb 45%, #edf2f7 100%);
     }
 
-    a{text-decoration:none;color:inherit}
-
-    .wrap{width:min(var(--max),calc(100% - 32px));margin:0 auto}
-
-    .topbar{
-      position:sticky;
-      top:0;
-      background:rgba(255,255,255,.85);
-      backdrop-filter:blur(12px);
-      border-bottom:1px solid rgba(0,0,0,.05);
-      z-index:10;
+    a {
+      color: inherit;
+      text-decoration: none;
     }
 
-    .topbar-inner{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      min-height:70px;
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(255,255,255,0.82);
+      border-bottom: 1px solid rgba(22,50,79,.08);
     }
 
-    .brand{display:flex;gap:12px;align-items:center}
-
-    .brand-mark{
-      width:44px;height:44px;border-radius:12px;
-      background:linear-gradient(135deg,var(--blue),var(--teal));
-      color:#fff;display:grid;place-items:center;font-weight:700;
+    .topbar-inner,
+    .hero-inner,
+    .section,
+    .footer-inner {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
     }
 
-    .brand-title{font-weight:700;color:var(--navy)}
-
-    .nav a{
-      margin-left:10px;
-      padding:10px 14px;
-      border-radius:999px;
+    .topbar-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
     }
 
-    .nav a:hover{background:rgba(44,123,229,.08)}
-
-    .hero{
-      padding:40px 0 20px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
     }
 
-    .hero-box{
-      background:linear-gradient(135deg,#2c7be5,#1fb6aa);
-      color:#fff;
-      padding:40px;
-      border-radius:28px;
-      box-shadow:var(--shadow);
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(44,123,229,.22);
+      flex: 0 0 auto;
     }
 
-    .hero h1{margin:0 0 10px;font-size:2.5rem}
-
-    .hero p{margin:0;opacity:.95}
-
-    .section{padding:20px 0}
-
-    .card-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:18px;
+    .brand-text {
+      min-width: 0;
     }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:22px;
-      box-shadow:var(--shadow);
-      transition:.2s ease;
+    .brand-kicker {
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
     }
 
-    .card:hover{
-      transform:translateY(-3px);
+    .brand-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .card h3{margin:0 0 8px;color:var(--navy)}
-
-    .card p{margin:0;color:var(--muted);font-size:.95rem}
-
-    .card .link{
-      margin-top:14px;
-      display:inline-block;
-      color:var(--blue);
-      font-weight:700;
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
-    @media(max-width:900px){
-      .card-grid{grid-template-columns:1fr}
+    .nav a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 15px;
+      color: var(--navy);
+      transition: .2s ease;
+    }
+
+    .nav a:hover,
+    .nav a:focus {
+      background: rgba(44,123,229,.08);
+      outline: none;
+    }
+
+    .nav .cta {
+      background: var(--gold);
+      color: #1b1b1b;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(242,201,76,.28);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 0 34px;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(12px);
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 380px;
+      height: 380px;
+      left: -90px;
+      top: 20px;
+      background: rgba(44,123,229,.28);
+    }
+
+    .hero::after {
+      width: 320px;
+      height: 320px;
+      right: -70px;
+      top: 10px;
+      background: rgba(31,182,170,.24);
+    }
+
+    .hero-shell {
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(44,123,229,.95), rgba(74,108,247,.9) 45%, rgba(31,182,170,.88));
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      padding: 64px 34px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    .hero-shell::before,
+    .hero-shell::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+    }
+
+    .hero-shell::before {
+      width: 300px;
+      height: 300px;
+      left: -40px;
+      bottom: -120px;
+    }
+
+    .hero-shell::after {
+      width: 240px;
+      height: 240px;
+      right: 8%;
+      top: -50px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(2.3rem, 5vw, 4.6rem);
+      line-height: 1.02;
+      margin: 0 0 18px;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+
+    .hero-copy p {
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: rgba(255,255,255,.92);
+      max-width: 720px;
+      margin: 0 0 26px;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 14px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: var(--navy);
+      box-shadow: 0 12px 24px rgba(0,0,0,.12);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.22);
+    }
+
+    .hero-panel {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: 24px;
+      padding: 24px;
+      color: #fff;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-panel h2 {
+      margin: 0 0 14px;
+      font-size: 1.2rem;
+    }
+
+    .hero-panel p {
+      margin: 0 0 18px;
+      line-height: 1.65;
+      color: rgba(255,255,255,.92);
+      font-size: .98rem;
+    }
+
+    .panel-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.12);
+    }
+
+    .panel-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.18);
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .panel-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: .98rem;
+    }
+
+    .panel-item span {
+      display: block;
+      font-size: .9rem;
+      line-height: 1.45;
+      color: rgba(255,255,255,.88);
+    }
+
+    .section {
+      padding: 26px 0 0;
+    }
+
+    .section-card {
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(15,23,42,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--blue);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section-card h2 {
+      margin: 0 0 12px;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      color: var(--navy);
+    }
+
+    .section-card p.lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.04rem;
+      line-height: 1.75;
+      max-width: 900px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+      margin-top: 28px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .workspace-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background: var(--card);
+      border: 1px solid rgba(17,24,39,.06);
+      box-shadow: 0 12px 30px rgba(15,23,42,.08);
+      padding: 22px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .workspace-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 36px rgba(15,23,42,.12);
+      border-color: rgba(44,123,229,.16);
+    }
+
+    .workspace-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(44,123,229,.10), transparent 68%);
+      pointer-events: none;
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+      margin-bottom: 18px;
+    }
+
+    .icon-attendance { background: linear-gradient(135deg, rgba(44,123,229,.18), rgba(44,123,229,.34)); }
+    .icon-events { background: linear-gradient(135deg, rgba(31,182,170,.18), rgba(31,182,170,.34)); }
+    .icon-people { background: linear-gradient(135deg, rgba(242,201,76,.25), rgba(242,201,76,.45)); }
+    .icon-receipts { background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(99,102,241,.34)); }
+
+    .workspace-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.24rem;
+      color: var(--navy);
+    }
+
+    .workspace-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: .97rem;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .info-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .info-box {
+      border-radius: 20px;
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,250,252,.9));
+      border: 1px solid rgba(15,23,42,.06);
+    }
+
+    .info-box h3 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: 1.06rem;
+    }
+
+    .info-box p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: .96rem;
+    }
+
+    .footer {
+      padding: 34px 0 46px;
+    }
+
+    .footer-inner {
+      text-align: center;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .footer-inner a {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-inner,
+      .grid,
+      .info-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .hero-copy {
+        grid-column: 1 / -1;
+      }
+
+      .hero-panel {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 0;
+      }
+
+      .nav {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .hero {
+        padding-top: 24px;
+      }
+
+      .hero-shell {
+        padding: 32px 20px;
+        border-radius: 26px;
+      }
+
+      .hero-inner,
+      .grid,
+      .info-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .section-card {
+        padding: 22px;
+      }
+
+      .workspace-card {
+        min-height: auto;
+      }
     }
   </style>
 </head>
 <body>
-
   <header class="topbar">
-    <div class="wrap topbar-inner">
-      <div class="brand">
+    <div class="topbar-inner">
+      <a href="#home" class="brand" aria-label="Ministry Connect Home">
         <div class="brand-mark">MC</div>
-        <div class="brand-title">Ministry Connect</div>
-      </div>
+        <div class="brand-text">
+          <div class="brand-kicker">VUMC Workspace</div>
+          <div class="brand-title">Ministry Connect</div>
+        </div>
+      </a>
 
-      <nav class="nav">
-        <a href="index.html">Home</a>
-        <a href="receipt.html">Receipt Tool</a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#home">Home</a>
+        <a href="#tools">Tools</a>
+        <a href="#about">About</a>
+        <a href="#support" class="cta">Quick Access</a>
       </nav>
     </div>
   </header>
 
-  <main class="wrap">
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-inner hero-shell">
+        <div class="hero-copy">
+          <div class="hero-badges">
+            <span class="hero-badge">Front Office Workspace</span>
+            <span class="hero-badge">Volunteer-Friendly</span>
+            <span class="hero-badge">Ministry Tools</span>
+          </div>
 
-    <section class="hero">
-      <div class="hero-box">
-        <h1>Ministry Connect</h1>
-        <p>Simple tools for the front office. Click a card below to get started.</p>
+          <h1>Ministry Connect</h1>
+          <p>
+            A cleaner, more flexible home for the everyday tools your office team uses most.
+            Attendance, events, people lookup, and receipt printing can all live behind one polished front end,
+            giving your team a clear and welcoming place to work.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#tools">Open Workspace Tools</a>
+            <a class="btn btn-secondary" href="#about">Learn More</a>
+          </div>
+        </div>
+
+        <aside class="hero-panel" aria-label="Workspace overview">
+          <h2>One place for everyday office tools</h2>
+          <p>
+            Ministry Connect gives your volunteer office team a simple, welcoming place to access the tools they use most.
+            It is designed to feel clear, organized, and easy to navigate without extra clutter.
+          </p>
+
+          <div class="panel-list">
+            <div class="panel-item">
+              <div class="panel-icon">✓</div>
+              <div>
+                <strong>Simple access</strong>
+                <span>Open the tools you need from one clean homepage without digging through multiple pages.</span>
+              </div>
+            </div>
+            <div class="panel-item">
+              <div class="panel-icon">🗂</div>
+              <div>
+                <strong>Organized workflow</strong>
+                <span>Attendance, events, people, and receipt printing can all live in one easy-to-use workspace.</span>
+              </div>
+            </div>
+            <div class="panel-item">
+              <div class="panel-icon">❤</div>
+              <div>
+                <strong>Made for your team</strong>
+                <span>Built to feel friendly and approachable for volunteers serving in the church office.</span>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
 
-    <section class="section">
-      <div class="card-grid">
+    <section class="section" id="about">
+      <div class="section-card">
+        <span class="eyebrow">Welcome</span>
+        <h2>Built for the VUMC office team</h2>
+        <p class="lead">
+          This homepage is designed as a cleaner starting point than Google Sites, with room for styled cards,
+          hover effects, overlays, and future sections that feel more like a real internal portal. It can keep the same purpose as your current workspace,
+          but with much more control over the experience.
+        </p>
 
-        <!-- RECEIPT TOOL -->
-        <a href="receipt.html" class="card">
-          <h3>Donation / In-Kind Receipt</h3>
-          <p>Create, email, and print donation receipts for office records.</p>
-          <span class="link">Open tool →</span>
-        </a>
-
-        <!-- PLACEHOLDERS -->
-        <div class="card">
-          <h3>Attendance</h3>
-          <p>Coming soon.</p>
+        <div class="info-strip">
+          <div class="info-box">
+            <h3>Welcoming and clear</h3>
+            <p>Give volunteers and office helpers a front page that feels simple, attractive, and easy to understand at a glance.</p>
+          </div>
+          <div class="info-box">
+            <h3>Easier to grow</h3>
+            <p>Once the homepage is in place, each tool can become its own page or modal card without rebuilding the whole workspace.</p>
+          </div>
+          <div class="info-box" id="support">
+            <h3>Better user experience</h3>
+            <p>Volunteer staff can land on one dashboard and clearly choose what they need instead of digging through menus and embedded blocks.</p>
+          </div>
         </div>
-
-        <div class="card">
-          <h3>People Search</h3>
-          <p>Coming soon.</p>
-        </div>
-
       </div>
     </section>
 
+    <section class="section" id="tools">
+      <div class="section-card">
+        <span class="eyebrow">Workspace Tools</span>
+        <h2>Choose what you need</h2>
+        <p class="lead">
+          These cards are the starting point for the tools your office team uses. Each one can link to a dedicated page,
+          open a modal, or load a connected interface as you continue building out the workspace.
+        </p>
+
+        <div class="grid">
+          <a href="#" class="workspace-card" aria-label="Attendance tools">
+            <div>
+              <div class="card-icon icon-attendance">✓</div>
+              <h3>Attendance</h3>
+              <p>Open attendance forms, log records, and access service check-in tools for volunteers and office staff.</p>
+            </div>
+            <span class="card-link">Open attendance →</span>
+          </a>
+
+          <a href="#" class="workspace-card" aria-label="Events tools">
+            <div>
+              <div class="card-icon icon-events">🗓</div>
+              <h3>Events</h3>
+              <p>View the calendar, manage event-related actions, and connect scheduling tools through your Apps Script back-end.</p>
+            </div>
+            <span class="card-link">View events →</span>
+          </a>
+
+          <a href="#" class="workspace-card" aria-label="People search tools">
+            <div>
+              <div class="card-icon icon-people">👥</div>
+              <h3>People</h3>
+              <p>Search people records from Planning Center through a secure interface without exposing secret keys in the browser.</p>
+            </div>
+            <span class="card-link">Search people →</span>
+          </a>
+
+          <a href="receipt.html" class="workspace-card" aria-label="Receipt tool">
+            <div>
+              <div class="card-icon icon-receipts">🧾</div>
+              <h3>Donation / In-Kind Receipt</h3>
+              <p>Create, email, and print donation receipts for office records from a cleaner, easier office workflow.</p>
+            </div>
+            <span class="card-link">Open receipt tool →</span>
+          </a>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <footer class="footer">
+    <div class="footer-inner">
+      Ministry Connect for Versailles UMC · Future home: <a href="https://workspace.versaillesumc.org/">workspace.versaillesumc.org</a>
+    </div>
+  </footer>
 </body>
 </html>
