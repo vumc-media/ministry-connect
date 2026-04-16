@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      :root { --pad: 18px; }
+      body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: var(--pad); max-width: 760px; margin: 0 auto;}
+      h2{margin: 0 0 8px}
+      p.help{margin: 0 0 16px; color: #555}
+      label{display:block; margin-top:12px; font-weight:600;}
+      input[type=text], input[type=date], input[type=email], textarea, select{
+        width:100%; padding:10px; box-sizing:border-box; border:1px solid #ccc; border-radius:8px; font: inherit;
+      }
+      textarea{resize: vertical}
+      .row{display:flex; gap:12px; flex-wrap: wrap;}
+      .row > div{flex:1 1 220px}
+      button{
+        margin-top:16px; padding:12px 16px; border:none; border-radius:10px; font-weight:700; cursor:pointer;
+        background:#0b5; color:white;
+      }
+      button:disabled{opacity:.6; cursor:not-allowed}
+      #status{margin-top:14px;}
+      .ok{color:#0a7a2a; font-weight:600}
+      .err{color:#b00020; font-weight:600}
+      small.muted{color:#666}
+      /* Ensure the print bar is always visible */
+      #printBar{display:flex; gap:8px; align-items:center; margin-top:8px;}
+      #printNow{background:#065;}
+    </style>
+  </head>
+  <body>
+    <h2>Generate In-Kind / Donation Receipt</h2>
+    <p class="help"><small class="muted">Emails a receipt and lets you print via your system print dialog.</small></p>
+
+    <form id="receiptForm" onsubmit="handleSubmit(event)">
+      <label>Date
+        <input type="date" name="date" required>
+      </label>
+
+      <label>Donor Name
+        <input type="text" name="donor" required placeholder="First Last">
+      </label>
+
+      <label>Organization (if any)
+        <input type="text" name="organization" placeholder="Celebrate Recovery, AA, etc.">
+      </label>
+
+      <label>Amount / Description
+        <input type="text" name="amount" required placeholder='e.g., "In-kind: 5 folding tables (est. $250)" or "$100 donation"'>
+      </label>
+
+      <div class="row">
+        <div>
+          <label>Payment Method
+            <select name="payment_method" id="payment_method" required>
+              <option value="" selected disabled>Select…</option>
+              <option>Cash</option>
+              <option>Check</option>
+            </select>
+          </label>
+        </div>
+        <div id="checkWrap" style="display:none">
+          <label>Check #
+            <input type="text" name="check_number" id="check_number" inputmode="numeric" pattern="[0-9]*" placeholder="e.g., 1065">
+          </label>
+        </div>
+      </div>
+
+      <label>Donor Email (optional)
+        <input type="email" name="email" placeholder="name@example.com">
+      </label>
+
+      <label>Notes
+        <textarea name="notes" rows="4" placeholder="Any extra details for the record…"></textarea>
+      </label>
+
+      <button type="submit" id="submitBtn">Create & Email Receipt</button>
+
+      <div id="status" aria-live="polite"></div>
+
+      <!-- Always visible, disabled until we have data -->
+      <div id="printBar">
+        <button type="button" id="printNow" disabled title="Submit a receipt first">Print Receipt</button>
+        <small class="muted" id="printHint">Submit first, then print. Allow pop-ups if prompted.</small>
+      </div>
+    </form>
+
+    <script>
+      const methodEl = document.getElementById('payment_method');
+      const checkWrap = document.getElementById('checkWrap');
+      const checkNum  = document.getElementById('check_number');
+      const statusEl  = document.getElementById('status');
+      const submitBtn = document.getElementById('submitBtn');
+      const printNow  = document.getElementById('printNow');
+      const printHint = document.getElementById('printHint');
+
+      let lastPayload = null; // remember last submitted data for printing
+
+      methodEl.addEventListener('change', () => {
+        const isCheck = methodEl.value === 'Check';
+        checkWrap.style.display = isCheck ? 'block' : 'none';
+        checkNum.required = isCheck;
+        if (!isCheck) checkNum.value = '';
+      });
+
+      function handleSubmit(e){
+        e.preventDefault();
+
+        if (methodEl.value === 'Check' && !checkNum.value.trim()){
+          statusEl.innerHTML = '<span class="err">Please enter the check number.</span>';
+          return;
+        }
+
+        const form = document.getElementById('receiptForm');
+        const data = Object.fromEntries(new FormData(form).entries());
+
+        statusEl.textContent = 'Working…';
+        submitBtn.disabled = true;
+
+        google.script.run
+          .withSuccessHandler(res => {
+            submitBtn.disabled = false;
+            if (res && res.success){
+              statusEl.innerHTML = '<span class="ok">Success: ' + res.message + '</span>';
+              lastPayload = data;
+              // Enable print button
+              printNow.disabled = false;
+              printNow.title = 'Open print dialog';
+              printHint.textContent = 'Click to open your print dialog. If nothing happens, allow pop-ups for this site.';
+            } else {
+              statusEl.innerHTML = '<span class="err">Error: ' + (res && res.message ? res.message : 'Unknown error') + '</span>';
+            }
+          })
+          .withFailureHandler(err => {
+            submitBtn.disabled = false;
+            statusEl.innerHTML = '<span class="err">Error: ' + (err && err.message ? err.message : String(err)) + '</span>';
+          })
+          .processForm(data);
+      }
+
+      // Open a print-friendly window and trigger system print dialog
+      printNow.addEventListener('click', () => {
+        if(!lastPayload){
+          statusEl.innerHTML = '<span class="err">Nothing to print yet. Submit a receipt first.</span>';
+          return;
+        }
+        google.script.run.withSuccessHandler(html => {
+          const w = window.open('', '_blank', 'noopener,noreferrer');
+          if (!w) {
+            statusEl.innerHTML = '<span class="err">Pop-up blocked. Allow pop-ups for this site to print.</span>';
+            return;
+          }
+          w.document.open();
+          w.document.write(html);
+          w.document.close();
+          // The preview document calls window.print() on load
+        }).buildPrintPreviewHtml(lastPayload);
+      });
+    </script>
+  </body>
+</html>
