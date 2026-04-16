@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Attendance Check-In | Ministry Connect</title>
+  <style>
+    :root {
+      --navy: #16324f;
+      --blue: #2c7be5;
+      --teal: #1fb6aa;
+      --gold: #f2c94c;
+      --bg: #eef3f8;
+      --card: rgba(255,255,255,0.95);
+      --text: #1f2937;
+      --muted: #667085;
+      --border: rgba(15, 23, 42, 0.10);
+      --shadow: 0 18px 45px rgba(16, 24, 40, 0.10);
+      --radius: 24px;
+      --radius-sm: 16px;
+      --max: 1120px;
+      --success: #0a7a2a;
+      --error: #b00020;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(44,123,229,.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(31,182,170,.12), transparent 32%),
+        linear-gradient(180deg, #eef3f9 0%, #f6f8fb 45%, #edf2f7 100%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(255,255,255,0.82);
+      border-bottom: 1px solid rgba(22,50,79,.08);
+    }
+
+    .topbar-inner,
+    .hero-inner,
+    .section,
+    .footer-inner,
+    .footer-shell {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(44,123,229,.22);
+      flex: 0 0 auto;
+    }
+
+    .brand-kicker {
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 15px;
+      color: var(--navy);
+      transition: .2s ease;
+    }
+
+    .nav a:hover,
+    .nav a:focus {
+      background: rgba(44,123,229,.08);
+      outline: none;
+    }
+
+    .nav .cta {
+      background: var(--gold);
+      color: #1b1b1b;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(242,201,76,.28);
+    }
+
+    .hero {
+      padding: 28px 0 20px;
+    }
+
+    .hero-shell {
+      background: linear-gradient(135deg, rgba(44,123,229,.95), rgba(74,108,247,.90) 45%, rgba(31,182,170,.88));
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      padding: 42px 28px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      position: relative;
+    }
+
+    .hero-shell::before,
+    .hero-shell::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.10);
+      pointer-events: none;
+    }
+
+    .hero-shell::before {
+      width: 260px;
+      height: 260px;
+      left: -30px;
+      bottom: -130px;
+    }
+
+    .hero-shell::after {
+      width: 220px;
+      height: 220px;
+      right: -30px;
+      top: -60px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .hero-copy h1 {
+      margin: 0 0 12px;
+      color: #fff;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1.03;
+      letter-spacing: -.02em;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      color: rgba(255,255,255,.92);
+      line-height: 1.7;
+      font-size: 1rem;
+      max-width: 620px;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 14px;
+    }
+
+    .hero-panel {
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 22px;
+      padding: 22px;
+      color: #fff;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-panel h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .hero-panel p,
+    .hero-panel li {
+      margin: 0;
+      line-height: 1.65;
+      color: rgba(255,255,255,.92);
+      font-size: .96rem;
+    }
+
+    .hero-panel ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
+
+    .section {
+      padding: 0 0 24px;
+    }
+
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    input[type="search"], input[type="text"], input[type="email"], input[type="date"], select, textarea {
+      padding: 12px 14px;
+      border: 1px solid rgba(15,23,42,.14);
+      border-radius: 14px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    input[type="search"] {
+      flex: 1 1 320px;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(44,123,229,.55);
+      box-shadow: 0 0 0 4px rgba(44,123,229,.10);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      color: #fff;
+      background: var(--blue);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+    .alpha {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 14px;
+    }
+
+    .alpha button {
+      border: 1px solid rgba(15,23,42,.10);
+      background: #fff;
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 10px;
+      box-shadow: none;
+    }
+
+    .alpha button.active {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid rgba(15,23,42,.08);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fff;
+      min-height: 180px;
+    }
+
+    .card h3 { margin: 0 0 10px; color: var(--navy); }
+    .muted { color: var(--muted); }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 460px;
+      overflow: auto;
+      border: 1px solid rgba(15,23,42,.08);
+      border-radius: 14px;
+      padding: 10px;
+      background: #fcfdff;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 2px 0;
+    }
+
+    .row label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      color: var(--text);
+    }
+
+    .row small { color: var(--muted); }
+
+    .sub-toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sub-toolbar button:nth-child(1) { background: #0f766e; }
+    .sub-toolbar button:nth-child(2) { background: #2563eb; }
+    .sub-toolbar button:nth-child(3) { background: #6b7280; }
+
+    .selected {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 36px;
+    }
+
+    .chip {
+      background: #f0f9f2;
+      color: #14532d;
+      border: 1px solid #cfe8d6;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: .9rem;
+      cursor: pointer;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 24px;
+      font-weight: 700;
+    }
+
+    .ok { color: var(--success); }
+    .err { color: var(--error); }
+
+    .footer-bar {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(15,23,42,.08);
+      padding: 12px 0;
+      margin-top: 8px;
+    }
+
+    .footer-shell {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footer-actions button:first-child { background: #6b7280; }
+    .footer-actions button:last-child { background: linear-gradient(135deg, var(--blue), var(--teal)); }
+
+    #newModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(0,0,0,.35);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    #newModal .box {
+      background: #fff;
+      border-radius: 18px;
+      max-width: 580px;
+      width: 100%;
+      padding: 20px;
+      border: 1px solid rgba(15,23,42,.08);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .modal-actions button:first-child { background: #6b7280; }
+    .modal-actions button:last-child { background: var(--blue); }
+
+    @media (max-width: 900px) {
+      .hero-inner,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 0;
+      }
+
+      .nav {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .hero-shell,
+      .section-card,
+      #newModal .box {
+        padding: 22px;
+        border-radius: 24px;
+      }
+
+      .modal-grid,
+      .footer-shell {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .footer-shell {
+        gap: 10px;
+      }
+
+      .footer-actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand" aria-label="Ministry Connect Home">
+        <div class="brand-mark">MC</div>
+        <div>
+          <div class="brand-kicker">VUMC Workspace</div>
+          <div class="brand-title">Ministry Connect</div>
+        </div>
+      </a>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="index.html#tools" class="cta">Back to Tools</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-inner hero-shell">
+        <div class="hero-copy">
+          <div class="hero-badges">
+            <span class="hero-badge">Attendance Check-In</span>
+            <span class="hero-badge">PCO Connected</span>
+            <span class="hero-badge">Front Office Workflow</span>
+          </div>
+          <h1>Attendance Check-In</h1>
+          <p>
+            Search for active people, add them to the selected list, create a new visitor when needed, and submit attendance
+            for the chosen date and service label.
+          </p>
+        </div>
+
+        <aside class="hero-panel" aria-label="How to use">
+          <h2>How this works</h2>
+          <ul>
+            <li>Search by typing a name or choosing a letter.</li>
+            <li>Select people from the results list and add them to the selected group.</li>
+            <li>Create a new visitor if they are not already in PCO.</li>
+            <li>Submit attendance after reviewing the date and service label.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-card">
+        <div id="alpha" class="alpha"></div>
+
+        <div class="toolbar">
+          <input id="q" type="search" placeholder="Search name…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+          <input id="attDate" type="date" aria-label="Attendance date" />
+          <select id="svc" aria-label="Label">
+            <option value="Attendance">Attendance</option>
+            <option value="Traditional Worship">Traditional Worship</option>
+            <option value="Contemporary Worship">Contemporary Worship</option>
+          </select>
+          <button id="new" type="button" style="background:#0ea5e9;">+ New person</button>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Results</h3>
+            <div id="results" class="list" aria-live="polite"></div>
+            <div class="sub-toolbar">
+              <button id="selectPage" type="button">Select all (page)</button>
+              <button id="addSelected" type="button">Add selected →</button>
+              <button id="loadMore" type="button">Load more</button>
+              <span id="countPage" class="muted"></span>
+            </div>
+            <div id="nores" class="muted" style="margin-top:8px; display:none;">No matches yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Selected</h3>
+            <div id="selected" class="selected"></div>
+            <div class="muted" id="selhelp" style="margin-top:8px;">Check names on the left, then “Add selected →”.</div>
+
+            <div class="card" style="margin-top:16px; min-height:auto;">
+              <h3>Optional note text</h3>
+              <textarea id="note" rows="3" placeholder="Attendance • (auto-fills to chosen date)"></textarea>
+            </div>
+
+            <div id="status" class="status" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-bar">
+    <div class="footer-shell">
+      <div class="muted"><span id="count">0</span> selected</div>
+      <div class="footer-actions">
+        <button id="clear" type="button">Clear</button>
+        <button id="submit" type="button">Submit Attendance</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="newModal">
+    <div class="box">
+      <h3 style="margin-top:0; color:var(--navy);">Add New Person</h3>
+      <div class="modal-grid">
+        <input id="np_first" placeholder="First name" />
+        <input id="np_last"  placeholder="Last name" />
+      </div>
+      <div class="modal-grid" style="margin-top:10px;">
+        <input id="np_email" placeholder="Email (optional)" type="email" />
+        <input id="np_phone" placeholder="Mobile (optional)" />
+      </div>
+      <p class="muted" style="margin:.8rem 0 0;">A note for a new visitor will be dated to the selected attendance date.</p>
+      <div class="modal-actions">
+        <button id="np_cancel" type="button">Cancel</button>
+        <button id="np_save" type="button">Create &amp; Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwstyvtDh-XAQtxijZyuS1RfXkmjUeh5SZXBUwInD0yOjlHD3oSez3w1LAjRaMCletKw/exec";
+
+    const $ = s => document.querySelector(s);
+    const resultsEl  = $('#results');
+    const selectedEl = $('#selected');
+    const countEl    = $('#count');
+    const noteEl     = $('#note');
+    const svcEl      = $('#svc');
+    const qEl        = $('#q');
+    const alphaEl    = $('#alpha');
+    const loadMoreEl = $('#loadMore');
+    const selectPageEl = $('#selectPage');
+    const addSelectedEl = $('#addSelected');
+    const pageCountEl = $('#countPage');
+    const attDateEl  = $('#attDate');
+    const statusEl   = $('#status');
+
+    let selected = new Map();
+    let currentQuery  = '';
+    let currentOffset = 0;
+    let nextOffset    = null;
+    let activeLetter  = '';
+    const PAGE_SIZE   = 25;
+    let debounceTimer = null;
+
+    function setStatus(message, kind = '') {
+      statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      statusEl.textContent = message || '';
+    }
+
+    function ensureScriptUrl() {
+      if (!SCRIPT_URL.trim()) {
+        setStatus('Paste your deployed attendance Apps Script URL into SCRIPT_URL before using this page.', 'err');
+        return false;
+      }
+      return true;
+    }
+
+    async function apiCall(payload) {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+
+    (function setDefaultDate(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      attDateEl.value = `${yyyy}-${mm}-${dd}`;
+    })();
+
+    (function buildAlpha(){
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(L => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = L;
+        b.addEventListener('click', () => {
+          activeLetter = L;
+          qEl.value = L;
+          updateAlphaState();
+          startSearch(L, true);
+        });
+        alphaEl.appendChild(b);
+      });
+    })();
+
+    function updateAlphaState() {
+      alphaEl.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === activeLetter);
+      });
+    }
+
+    qEl.addEventListener('input', () => {
+      activeLetter = '';
+      updateAlphaState();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => startSearch(qEl.value.trim(), true), 300);
+    });
+
+    $('#clear').addEventListener('click', () => {
+      selected.clear();
+      renderSelected();
+      setStatus('Selection cleared.');
+    });
+
+    $('#submit').addEventListener('click', submitAttendance);
+    loadMoreEl.addEventListener('click', loadMore);
+    selectPageEl.addEventListener('click', selectAllOnPage);
+    addSelectedEl.addEventListener('click', addCheckedToSelected);
+
+    $('#new').addEventListener('click', () => {
+      $('#newModal').style.display = 'flex';
+      $('#np_first').focus();
+    });
+
+    $('#np_cancel').addEventListener('click', closeNewModal);
+    $('#np_save').addEventListener('click', saveNewPerson);
+
+    function closeNewModal() {
+      $('#newModal').style.display = 'none';
+      ['np_first','np_last','np_email','np_phone'].forEach(id => {
+        const el = $('#'+id);
+        if (el) el.value = '';
+      });
+    }
+
+    async function saveNewPerson() {
+      if (!ensureScriptUrl()) return;
+
+      const first = $('#np_first').value.trim();
+      const last  = $('#np_last').value.trim();
+      const email = $('#np_email').value.trim();
+      const phone = $('#np_phone').value.trim();
+      if (!first || !last) {
+        alert('First and last name are required.');
+        return;
+      }
+
+      const isoDate = attDateEl.value;
+      $('#np_save').disabled = true;
+      setStatus('Creating new person…');
+
+      try {
+        const res = await apiCall({
+          action: 'createPerson',
+          person: { first_name: first, last_name: last, email, phone },
+          isoDate
+        });
+
+        $('#np_save').disabled = false;
+        if (!res || !res.ok) {
+          setStatus(res?.error || 'Create failed.', 'err');
+          alert(res?.error || 'Create failed.');
+          return;
+        }
+
+        const p = res.person;
+        selected.set(p.id, p);
+        renderSelected();
+        closeNewModal();
+        if (!noteEl.value.trim()) {
+          noteEl.value = `Attendance • NEW VISITOR • ${formatNiceDate(isoDate)}`;
+        }
+        setStatus('New person created and added to the selected list.', 'ok');
+      } catch (err) {
+        $('#np_save').disabled = false;
+        console.error(err);
+        setStatus('Server error creating person.', 'err');
+        alert('Server error creating person. See console.');
+      }
+    }
+
+    function startSearch(q, reset = false) {
+      currentQuery = q || '';
+      if (!currentQuery) {
+        resultsEl.innerHTML = '';
+        $('#nores').style.display = 'block';
+        pageCountEl.textContent = '';
+        nextOffset = null;
+        return;
+      }
+      if (reset) currentOffset = 0;
+      fetchPage(!reset);
+    }
+
+    function loadMore() {
+      if (nextOffset == null) return;
+      currentOffset = nextOffset;
+      fetchPage(true);
+    }
+
+    async function fetchPage(append = false) {
+      if (!ensureScriptUrl()) return;
+
+      if (!append) {
+        resultsEl.innerHTML = '<div class="muted">Loading…</div>';
+        $('#nores').style.display = 'none';
+      }
+      setStatus('Searching people…');
+
+      try {
+        const res = await apiCall({
+          action: 'searchPeople',
+          q: currentQuery,
+          offset: currentOffset,
+          limit: PAGE_SIZE
+        });
+
+        const rows = res?.rows || [];
+        nextOffset = ('nextOffset' in res) ? res.nextOffset : null;
+
+        if (!append) resultsEl.innerHTML = '';
+        if (!rows.length && !append) {
+          $('#nores').style.display = 'block';
+          pageCountEl.textContent = '';
+          setStatus('No matches found.');
+          return;
+        }
+
+        const frag = document.createDocumentFragment();
+        rows.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'row';
+          const id = `cb_${p.id}`;
+          const displayName = toLastFirst(p.name);
+          div.innerHTML = `
+            <label for="${id}">
+              <input type="checkbox" id="${id}" value="${p.id}" data-name="${escapeHtml(displayName)}" />
+              <span>${escapeHtml(displayName)}</span>
+              ${p.primary_email ? `<small>&nbsp;${escapeHtml(p.primary_email)}</small>` : ''}
+            </label>
+          `;
+          frag.appendChild(div);
+        });
+        resultsEl.appendChild(frag);
+
+        pageCountEl.textContent = `${rows.length} shown${nextOffset != null ? ' • more available' : ''}`;
+        setStatus(`Loaded ${rows.length} result${rows.length === 1 ? '' : 's'}.`, 'ok');
+      } catch (err) {
+        console.error(err);
+        if (!append) {
+          resultsEl.innerHTML = '';
+          $('#nores').style.display = 'block';
+          pageCountEl.textContent = '';
+        }
+        setStatus('Search failed.', 'err');
+      }
+    }
+
+    function selectAllOnPage() {
+      resultsEl.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+      setStatus('All names on this page have been checked.', 'ok');
+    }
+
+    function addCheckedToSelected() {
+      const boxes = resultsEl.querySelectorAll('input[type="checkbox"]:checked');
+      if (!boxes.length) {
+        alert('No names checked on this page.');
+        return;
+      }
+      boxes.forEach(cb => {
+        const id = cb.value;
+        const name = cb.getAttribute('data-name') || id;
+        selected.set(id, { id, name, primary_email: '' });
+      });
+      renderSelected();
+      setStatus(`${boxes.length} ${boxes.length === 1 ? 'person was' : 'people were'} added to the selected list.`, 'ok');
+    }
+
+    function renderSelected() {
+      selectedEl.innerHTML = '';
+      selected.forEach(p => {
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.textContent = toLastFirst(p.name);
+        c.title = 'Click to remove';
+        c.addEventListener('click', () => {
+          selected.delete(p.id);
+          renderSelected();
+        });
+        selectedEl.appendChild(c);
+      });
+      countEl.textContent = selected.size;
+      $('#selhelp').style.display = selected.size ? 'none' : '';
+    }
+
+    async function submitAttendance() {
+      if (!ensureScriptUrl()) return;
+      if (!selected.size) {
+        alert('Select at least one person.');
+        return;
+      }
+
+      const ids = Array.from(selected.keys());
+      const note = noteEl.value.trim();
+      const label = svcEl.value;
+      const isoDate = attDateEl.value;
+
+      const ok = confirm(`Submit ${ids.length} attendee(s) for ${formatNiceDate(isoDate)}?`);
+      if (!ok) return;
+
+      $('#submit').disabled = true;
+      setStatus('Submitting attendance…');
+
+      try {
+        const res = await apiCall({
+          action: 'submitAttendance',
+          personIds: ids,
+          noteText: note,
+          label,
+          isoDate
+        });
+
+        $('#submit').disabled = false;
+        if (res && res.ok) {
+          alert(`Success! Logged ${res.count} attendee(s) for ${formatNiceDate(isoDate)}.`);
+          selected.clear();
+          renderSelected();
+          noteEl.value = '';
+          setStatus(`Attendance submitted for ${res.count} ${res.count === 1 ? 'person' : 'people'}.`, 'ok');
+        } else {
+          setStatus(`Error: ${res?.error || 'Unknown'}`, 'err');
+          alert(`Error: ${res?.error || 'Unknown'}`);
+        }
+      } catch (err) {
+        $('#submit').disabled = false;
+        console.error(err);
+        setStatus('Server error. See console.', 'err');
+        alert('Server error. See console.');
+      }
+    }
+
+    function toLastFirst(name) {
+      const s = String(name || '').trim();
+      if (!s) return '';
+      if (s.includes(',')) return s;
+      const parts = s.split(/\s+/);
+      if (parts.length === 1) return s;
+      const last  = parts.pop();
+      const first = parts.join(' ');
+      return `${last}, ${first}`.replace(/^, |, $/g,'');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function formatNiceDate(iso) {
+      if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+        return new Date().toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+      }
+      const [Y,M,D] = iso.split('-').map(Number);
+      const d = new Date(Y, M-1, D, 12, 0, 0);
+      return d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+    }
+
+    startSearch('A', true);
+  </script>
+</body>
+</html>
