@@ -50,7 +50,6 @@
     .topbar-inner,
     .hero-inner,
     .section,
-    .footer-inner,
     .footer-shell {
       width: min(var(--max), calc(100% - 32px));
       margin: 0 auto;
@@ -342,6 +341,7 @@
       border-radius: 14px;
       padding: 10px;
       background: #fcfdff;
+      min-height: 54px;
     }
 
     .row {
@@ -665,7 +665,7 @@
 
     function ensureScriptUrl() {
       if (!SCRIPT_URL.trim()) {
-        setStatus('Paste your deployed attendance Apps Script URL into SCRIPT_URL before using this page.', 'err');
+        setStatus('Attendance script URL is missing.', 'err');
         return false;
       }
       return true;
@@ -677,7 +677,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      return await res.json();
+
+      const text = await res.text();
+      if (!text.trim()) {
+        throw new Error('Empty response from Apps Script');
+      }
+      return JSON.parse(text);
     }
 
     (function setDefaultDate(){
@@ -750,6 +755,7 @@
       const last  = $('#np_last').value.trim();
       const email = $('#np_email').value.trim();
       const phone = $('#np_phone').value.trim();
+
       if (!first || !last) {
         alert('First and last name are required.');
         return;
@@ -767,6 +773,7 @@
         });
 
         $('#np_save').disabled = false;
+
         if (!res || !res.ok) {
           setStatus(res?.error || 'Create failed.', 'err');
           alert(res?.error || 'Create failed.');
@@ -777,9 +784,11 @@
         selected.set(p.id, p);
         renderSelected();
         closeNewModal();
+
         if (!noteEl.value.trim()) {
           noteEl.value = `Attendance • NEW VISITOR • ${formatNiceDate(isoDate)}`;
         }
+
         setStatus('New person created and added to the selected list.', 'ok');
       } catch (err) {
         $('#np_save').disabled = false;
@@ -815,20 +824,29 @@
         resultsEl.innerHTML = '<div class="muted">Loading…</div>';
         $('#nores').style.display = 'none';
       }
+
       setStatus('Searching people…');
 
       try {
-        const res = await apiCall({
-          action: 'searchPeople',
-          q: currentQuery,
-          offset: currentOffset,
-          limit: PAGE_SIZE
-        });
+        const url = SCRIPT_URL
+          + '?action=searchPeople'
+          + '&q=' + encodeURIComponent(currentQuery)
+          + '&offset=' + encodeURIComponent(currentOffset)
+          + '&limit=' + encodeURIComponent(PAGE_SIZE);
 
-        const rows = res?.rows || [];
-        nextOffset = ('nextOffset' in res) ? res.nextOffset : null;
+        const res = await fetch(url);
+        const text = await res.text();
+
+        if (!text.trim()) {
+          throw new Error('Empty response from Apps Script');
+        }
+
+        const data = JSON.parse(text);
+        const rows = data?.rows || [];
+        nextOffset = ('nextOffset' in data) ? data.nextOffset : null;
 
         if (!append) resultsEl.innerHTML = '';
+
         if (!rows.length && !append) {
           $('#nores').style.display = 'block';
           pageCountEl.textContent = '';
@@ -837,11 +855,13 @@
         }
 
         const frag = document.createDocumentFragment();
+
         rows.forEach(p => {
           const div = document.createElement('div');
           div.className = 'row';
           const id = `cb_${p.id}`;
           const displayName = toLastFirst(p.name);
+
           div.innerHTML = `
             <label for="${id}">
               <input type="checkbox" id="${id}" value="${p.id}" data-name="${escapeHtml(displayName)}" />
@@ -849,19 +869,24 @@
               ${p.primary_email ? `<small>&nbsp;${escapeHtml(p.primary_email)}</small>` : ''}
             </label>
           `;
+
           frag.appendChild(div);
         });
+
         resultsEl.appendChild(frag);
 
         pageCountEl.textContent = `${rows.length} shown${nextOffset != null ? ' • more available' : ''}`;
         setStatus(`Loaded ${rows.length} result${rows.length === 1 ? '' : 's'}.`, 'ok');
+
       } catch (err) {
         console.error(err);
+
         if (!append) {
           resultsEl.innerHTML = '';
           $('#nores').style.display = 'block';
           pageCountEl.textContent = '';
         }
+
         setStatus('Search failed.', 'err');
       }
     }
@@ -877,11 +902,13 @@
         alert('No names checked on this page.');
         return;
       }
+
       boxes.forEach(cb => {
         const id = cb.value;
         const name = cb.getAttribute('data-name') || id;
         selected.set(id, { id, name, primary_email: '' });
       });
+
       renderSelected();
       setStatus(`${boxes.length} ${boxes.length === 1 ? 'person was' : 'people were'} added to the selected list.`, 'ok');
     }
@@ -899,12 +926,14 @@
         });
         selectedEl.appendChild(c);
       });
+
       countEl.textContent = selected.size;
       $('#selhelp').style.display = selected.size ? 'none' : '';
     }
 
     async function submitAttendance() {
       if (!ensureScriptUrl()) return;
+
       if (!selected.size) {
         alert('Select at least one person.');
         return;
@@ -931,6 +960,7 @@
         });
 
         $('#submit').disabled = false;
+
         if (res && res.ok) {
           alert(`Success! Logged ${res.count} attendee(s) for ${formatNiceDate(isoDate)}.`);
           selected.clear();
@@ -961,7 +991,13 @@
     }
 
     function escapeHtml(s) {
-      return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[m]));
     }
 
     function formatNiceDate(iso) {
