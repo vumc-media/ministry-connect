@@ -293,27 +293,6 @@
     button:hover { transform: translateY(-1px); }
     button:disabled { opacity: .65; cursor: not-allowed; transform: none; }
 
-    .alpha {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 0 0 14px;
-    }
-
-    .alpha button {
-      border: 1px solid rgba(15,23,42,.10);
-      background: #fff;
-      color: var(--text);
-      padding: 7px 10px;
-      border-radius: 10px;
-      box-shadow: none;
-    }
-
-    .alpha button.active {
-      background: var(--navy);
-      color: #fff;
-    }
-
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -372,7 +351,6 @@
 
     .sub-toolbar button:nth-child(1) { background: #0f766e; }
     .sub-toolbar button:nth-child(2) { background: #2563eb; }
-    .sub-toolbar button:nth-child(3) { background: #6b7280; }
 
     .selected {
       display: flex;
@@ -541,18 +519,17 @@
           </div>
           <h1>Attendance Check-In</h1>
           <p>
-            Search for active people, add them to the selected list, create a new visitor when needed, and submit attendance
-            for the chosen date and service label.
+            Scroll through the full people list, use multi-select checkboxes, add them to the selected list, create a new visitor when needed, and submit attendance for the chosen date and worship service.
           </p>
         </div>
 
         <aside class="hero-panel" aria-label="How to use">
           <h2>How this works</h2>
           <ul>
-            <li>Search by typing a name or choosing a letter.</li>
-            <li>Select people from the results list and add them to the selected group.</li>
+            <li>The full list loads automatically from PCO.</li>
+            <li>Names are shown alphabetized by last name first.</li>
+            <li>Check multiple people, then add them to the selected group.</li>
             <li>Create a new visitor if they are not already in PCO.</li>
-            <li>Submit attendance after reviewing the date and service label.</li>
           </ul>
         </aside>
       </div>
@@ -560,27 +537,24 @@
 
     <section class="section">
       <div class="section-card">
-        <div id="alpha" class="alpha"></div>
-
         <div class="toolbar">
           <input id="q" type="search" placeholder="Search name…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
           <input id="attDate" type="date" aria-label="Attendance date" />
           <select id="svc" aria-label="Label">
-            <option value="Attendance">Attendance</option>
             <option value="Traditional Worship">Traditional Worship</option>
             <option value="Contemporary Worship">Contemporary Worship</option>
+            <option value="Blended Worship">Blended Worship</option>
           </select>
           <button id="new" type="button" style="background:#0ea5e9;">+ New person</button>
         </div>
 
         <div class="grid">
           <div class="card">
-            <h3>Results</h3>
+            <h3>People List</h3>
             <div id="results" class="list" aria-live="polite"></div>
             <div class="sub-toolbar">
-              <button id="selectPage" type="button">Select all (page)</button>
+              <button id="selectPage" type="button">Select visible</button>
               <button id="addSelected" type="button">Add selected →</button>
-              <button id="loadMore" type="button">Load more</button>
               <span id="countPage" class="muted"></span>
             </div>
             <div id="nores" class="muted" style="margin-top:8px; display:none;">No matches yet.</div>
@@ -642,8 +616,6 @@
     const noteEl     = $('#note');
     const svcEl      = $('#svc');
     const qEl        = $('#q');
-    const alphaEl    = $('#alpha');
-    const loadMoreEl = $('#loadMore');
     const selectPageEl = $('#selectPage');
     const addSelectedEl = $('#addSelected');
     const pageCountEl = $('#countPage');
@@ -651,11 +623,8 @@
     const statusEl   = $('#status');
 
     let selected = new Map();
-    let currentQuery  = '';
-    let currentOffset = 0;
-    let nextOffset    = null;
-    let activeLetter  = '';
-    const PAGE_SIZE   = 25;
+    let allPeople = [];
+    let visiblePeople = [];
     let debounceTimer = null;
 
     function setStatus(message, kind = '') {
@@ -693,32 +662,9 @@
       attDateEl.value = `${yyyy}-${mm}-${dd}`;
     })();
 
-    (function buildAlpha(){
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(L => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.textContent = L;
-        b.addEventListener('click', () => {
-          activeLetter = L;
-          qEl.value = L;
-          updateAlphaState();
-          startSearch(L, true);
-        });
-        alphaEl.appendChild(b);
-      });
-    })();
-
-    function updateAlphaState() {
-      alphaEl.querySelectorAll('button').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent === activeLetter);
-      });
-    }
-
     qEl.addEventListener('input', () => {
-      activeLetter = '';
-      updateAlphaState();
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => startSearch(qEl.value.trim(), true), 300);
+      debounceTimer = setTimeout(() => filterAndRender(qEl.value.trim()), 200);
     });
 
     $('#clear').addEventListener('click', () => {
@@ -728,8 +674,7 @@
     });
 
     $('#submit').addEventListener('click', submitAttendance);
-    loadMoreEl.addEventListener('click', loadMore);
-    selectPageEl.addEventListener('click', selectAllOnPage);
+    selectPageEl.addEventListener('click', selectAllVisible);
     addSelectedEl.addEventListener('click', addCheckedToSelected);
 
     $('#new').addEventListener('click', () => {
@@ -780,9 +725,12 @@
           return;
         }
 
-        const p = res.person;
+        const p = normalizePerson(res.person);
+        allPeople.push(p);
+        sortPeople(allPeople);
         selected.set(p.id, p);
         renderSelected();
+        filterAndRender(qEl.value.trim());
         closeNewModal();
 
         if (!noteEl.value.trim()) {
@@ -798,115 +746,162 @@
       }
     }
 
-    function startSearch(q, reset = false) {
-      currentQuery = q || '';
-      if (!currentQuery) {
+    async function loadAllPeople() {
+      if (!ensureScriptUrl()) return;
+
+      resultsEl.innerHTML = '<div class="muted">Loading full people list…</div>';
+      $('#nores').style.display = 'none';
+      pageCountEl.textContent = '';
+      setStatus('Loading complete people list…');
+
+      try {
+        const combined = new Map();
+
+        for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+          let offset = 0;
+          let nextOffset = 0;
+
+          do {
+            const url = SCRIPT_URL
+              + '?action=searchPeople'
+              + '&q=' + encodeURIComponent(letter)
+              + '&offset=' + encodeURIComponent(offset)
+              + '&limit=100';
+
+            const res = await fetch(url);
+            const text = await res.text();
+
+            if (!text.trim()) {
+              throw new Error('Empty response from Apps Script');
+            }
+
+            const data = JSON.parse(text);
+            const rows = data?.rows || [];
+
+            rows.forEach(p => {
+              if (p && p.id != null) {
+                combined.set(String(p.id), normalizePerson(p));
+              }
+            });
+
+            nextOffset = ('nextOffset' in data) ? data.nextOffset : null;
+            offset = nextOffset;
+          } while (nextOffset != null);
+        }
+
+        allPeople = Array.from(combined.values());
+        sortPeople(allPeople);
+        filterAndRender('');
+
+        setStatus(`Loaded ${allPeople.length} people.`, 'ok');
+      } catch (err) {
+        console.error(err);
         resultsEl.innerHTML = '';
         $('#nores').style.display = 'block';
         pageCountEl.textContent = '';
-        nextOffset = null;
+        setStatus('Failed to load people list.', 'err');
+      }
+    }
+
+    function normalizePerson(p) {
+      const name = String(
+        p.name ||
+        [p.first_name, p.last_name].filter(Boolean).join(' ') ||
+        ''
+      ).trim();
+
+      const displayName = toLastFirst(name);
+
+      return {
+        id: String(p.id),
+        name,
+        displayName,
+        primary_email: p.primary_email || ''
+      };
+    }
+
+    function sortPeople(arr) {
+      arr.sort((a, b) => {
+        const an = a.displayName.toLowerCase();
+        const bn = b.displayName.toLowerCase();
+        return an.localeCompare(bn);
+      });
+    }
+
+    function filterAndRender(query) {
+      const q = String(query || '').trim().toLowerCase();
+
+      visiblePeople = !q
+        ? [...allPeople]
+        : allPeople.filter(p => {
+            const haystack = [
+              p.displayName,
+              p.name,
+              p.primary_email
+            ].join(' ').toLowerCase();
+            return haystack.includes(q);
+          });
+
+      renderResults(visiblePeople);
+    }
+
+    function renderResults(rows) {
+      resultsEl.innerHTML = '';
+
+      if (!rows.length) {
+        $('#nores').style.display = 'block';
+        pageCountEl.textContent = '';
+        setStatus('No matches found.');
         return;
       }
-      if (reset) currentOffset = 0;
-      fetchPage(!reset);
+
+      $('#nores').style.display = 'none';
+
+      const frag = document.createDocumentFragment();
+
+      rows.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'row';
+        const id = `cb_${p.id}`;
+
+        div.innerHTML = `
+          <label for="${id}">
+            <input type="checkbox" id="${id}" value="${p.id}" data-name="${escapeHtml(p.displayName)}" />
+            <span>${escapeHtml(p.displayName)}</span>
+            ${p.primary_email ? `<small>&nbsp;${escapeHtml(p.primary_email)}</small>` : ''}
+          </label>
+        `;
+
+        frag.appendChild(div);
+      });
+
+      resultsEl.appendChild(frag);
+      pageCountEl.textContent = `${rows.length} shown`;
+      setStatus(`Showing ${rows.length} people.`, 'ok');
     }
 
-    function loadMore() {
-      if (nextOffset == null) return;
-      currentOffset = nextOffset;
-      fetchPage(true);
-    }
-
-    async function fetchPage(append = false) {
-      if (!ensureScriptUrl()) return;
-
-      if (!append) {
-        resultsEl.innerHTML = '<div class="muted">Loading…</div>';
-        $('#nores').style.display = 'none';
-      }
-
-      setStatus('Searching people…');
-
-      try {
-        const url = SCRIPT_URL
-          + '?action=searchPeople'
-          + '&q=' + encodeURIComponent(currentQuery)
-          + '&offset=' + encodeURIComponent(currentOffset)
-          + '&limit=' + encodeURIComponent(PAGE_SIZE);
-
-        const res = await fetch(url);
-        const text = await res.text();
-
-        if (!text.trim()) {
-          throw new Error('Empty response from Apps Script');
-        }
-
-        const data = JSON.parse(text);
-        const rows = data?.rows || [];
-        nextOffset = ('nextOffset' in data) ? data.nextOffset : null;
-
-        if (!append) resultsEl.innerHTML = '';
-
-        if (!rows.length && !append) {
-          $('#nores').style.display = 'block';
-          pageCountEl.textContent = '';
-          setStatus('No matches found.');
-          return;
-        }
-
-        const frag = document.createDocumentFragment();
-
-        rows.forEach(p => {
-          const div = document.createElement('div');
-          div.className = 'row';
-          const id = `cb_${p.id}`;
-          const displayName = toLastFirst(p.name);
-
-          div.innerHTML = `
-            <label for="${id}">
-              <input type="checkbox" id="${id}" value="${p.id}" data-name="${escapeHtml(displayName)}" />
-              <span>${escapeHtml(displayName)}</span>
-              ${p.primary_email ? `<small>&nbsp;${escapeHtml(p.primary_email)}</small>` : ''}
-            </label>
-          `;
-
-          frag.appendChild(div);
-        });
-
-        resultsEl.appendChild(frag);
-
-        pageCountEl.textContent = `${rows.length} shown${nextOffset != null ? ' • more available' : ''}`;
-        setStatus(`Loaded ${rows.length} result${rows.length === 1 ? '' : 's'}.`, 'ok');
-
-      } catch (err) {
-        console.error(err);
-
-        if (!append) {
-          resultsEl.innerHTML = '';
-          $('#nores').style.display = 'block';
-          pageCountEl.textContent = '';
-        }
-
-        setStatus('Search failed.', 'err');
-      }
-    }
-
-    function selectAllOnPage() {
+    function selectAllVisible() {
       resultsEl.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-      setStatus('All names on this page have been checked.', 'ok');
+      setStatus('All visible names have been checked.', 'ok');
     }
 
     function addCheckedToSelected() {
       const boxes = resultsEl.querySelectorAll('input[type="checkbox"]:checked');
+
       if (!boxes.length) {
-        alert('No names checked on this page.');
+        alert('No names checked in the list.');
         return;
       }
 
       boxes.forEach(cb => {
         const id = cb.value;
-        const name = cb.getAttribute('data-name') || id;
-        selected.set(id, { id, name, primary_email: '' });
+        const person = allPeople.find(p => p.id === id);
+        if (person) {
+          selected.set(id, person);
+        } else {
+          const name = cb.getAttribute('data-name') || id;
+          selected.set(id, { id, name, displayName: name, primary_email: '' });
+        }
       });
 
       renderSelected();
@@ -915,10 +910,11 @@
 
     function renderSelected() {
       selectedEl.innerHTML = '';
+
       selected.forEach(p => {
         const c = document.createElement('span');
         c.className = 'chip';
-        c.textContent = toLastFirst(p.name);
+        c.textContent = p.displayName || toLastFirst(p.name);
         c.title = 'Click to remove';
         c.addEventListener('click', () => {
           selected.delete(p.id);
@@ -1009,7 +1005,7 @@
       return d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
     }
 
-    startSearch('A', true);
+    loadAllPeople();
   </script>
 </body>
 </html>
