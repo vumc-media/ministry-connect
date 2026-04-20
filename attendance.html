@@ -513,22 +513,23 @@
           <div class="hero-badges">
             <span class="hero-badge">Attendance Check-In</span>
             <span class="hero-badge">PCO Connected</span>
-            <span class="hero-badge">CSV Powered</span>
+            <span class="hero-badge">Auto Refreshed</span>
           </div>
           <h1>Attendance Check-In</h1>
           <p>
-            Scroll through the full people list, search by name, select multiple people, and submit attendance for the selected worship service.
+            Scroll through the full active people list, search by name, select multiple people, and submit attendance for the selected worship service.
           </p>
         </div>
 
         <aside class="hero-panel" aria-label="How to use">
           <h2>How this works</h2>
           <ul>
-            <li>The full list loads from your exported People CSV.</li>
+            <li>The full list loads from the cached Planning Center backend.</li>
             <li>Only active people are shown.</li>
             <li>Names are displayed alphabetized by last name first.</li>
             <li>Check multiple names, then add them to the selected group.</li>
           </ul>
+          <p id="lastUpdated" style="margin-top:12px;">Loading people list…</p>
         </aside>
       </div>
     </section>
@@ -590,7 +591,7 @@
       <h3 style="margin-top:0; color:var(--navy);">Add New Person</h3>
       <div class="modal-grid">
         <input id="np_first" placeholder="First name" />
-        <input id="np_last"  placeholder="Last name" />
+        <input id="np_last" placeholder="Last name" />
       </div>
       <div class="modal-grid" style="margin-top:10px;">
         <input id="np_email" placeholder="Email (optional)" type="email" />
@@ -606,7 +607,6 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwstyvtDh-XAQtxijZyuS1RfXkmjUeh5SZXBUwInD0yOjlHD3oSez3w1LAjRaMCletKw/exec";
-    const CSV_URL = "./vumc-4-20-2026.csv";
 
     const $ = s => document.querySelector(s);
     const resultsEl = $('#results');
@@ -618,6 +618,7 @@
     const attDateEl = $('#attDate');
     const statusEl = $('#status');
     const countPageEl = $('#countPage');
+    const lastUpdatedEl = $('#lastUpdated');
 
     let selected = new Map();
     let allPeople = [];
@@ -644,6 +645,14 @@
         body: JSON.stringify(payload)
       });
 
+      const text = await res.text();
+      if (!text.trim()) throw new Error('Empty response from Apps Script');
+      return JSON.parse(text);
+    }
+
+    async function apiGetPeople(forceRefresh = false) {
+      const url = SCRIPT_URL + '?action=getPeople' + (forceRefresh ? '&forceRefresh=true' : '');
+      const res = await fetch(url, { method: 'GET' });
       const text = await res.text();
       if (!text.trim()) throw new Error('Empty response from Apps Script');
       return JSON.parse(text);
@@ -744,10 +753,9 @@
 
         const p = normalizePerson({
           id: res.person?.id,
-          firstName: res.person?.first_name || first,
-          lastName: res.person?.last_name || last,
-          email: res.person?.primary_email || email,
-          status: 'active'
+          first_name: res.person?.first_name || first,
+          last_name: res.person?.last_name || last,
+          name: res.person?.name || `${last}, ${first}`
         });
 
         allPeople.push(p);
@@ -770,130 +778,62 @@
       }
     }
 
-    function parseCSV(text) {
-      const rows = [];
-      let row = [];
-      let field = '';
-      let inQuotes = false;
+    async function loadPeople(forceRefresh = false) {
+      if (!ensureScriptUrl()) return;
 
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        const next = text[i + 1];
-
-        if (ch === '"') {
-          if (inQuotes && next === '"') {
-            field += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === ',' && !inQuotes) {
-          row.push(field);
-          field = '';
-        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-          if (ch === '\r' && next === '\n') i++;
-          row.push(field);
-          rows.push(row);
-          row = [];
-          field = '';
-        } else {
-          field += ch;
-        }
-      }
-
-      if (field.length || row.length) {
-        row.push(field);
-        rows.push(row);
-      }
-
-      return rows;
-    }
-
-    async function loadCsvPeople() {
-      setStatus('Loading people list from CSV…');
+      setStatus('Loading people list…');
       resultsEl.innerHTML = '<div class="muted">Loading people list…</div>';
       $('#nores').style.display = 'none';
 
       try {
-        const res = await fetch(CSV_URL, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`CSV load failed: ${res.status}`);
-        const text = await res.text();
+        const res = await apiGetPeople(forceRefresh);
 
-        const rows = parseCSV(text);
-        if (!rows.length) throw new Error('CSV is empty.');
-
-        const headers = rows[0].map(h => String(h || '').trim());
-        const dataRows = rows.slice(1);
-
-        const idx = {
-          id: headers.indexOf('Person ID'),
-          first: headers.indexOf('First Name'),
-          last: headers.indexOf('Last Name'),
-          status: headers.indexOf('Status')
-        };
-
-        if (idx.id === -1 || idx.first === -1 || idx.last === -1 || idx.status === -1) {
-          throw new Error('Required CSV columns were not found.');
-        }
-
-        const peopleMap = new Map();
-
-        dataRows.forEach(cols => {
-          const id = String(cols[idx.id] || '').trim();
-          const firstName = String(cols[idx.first] || '').trim();
-          const lastName = String(cols[idx.last] || '').trim();
-          const status = String(cols[idx.status] || '').trim().toLowerCase();
-
-          if (!id || (!firstName && !lastName)) return;
-          if (status.toLowerCase() !== 'active') return;
-
-          peopleMap.set(id, normalizePerson({
-            id,
-            firstName,
-            lastName,
-            status
-          }));
-        });
-
-        allPeople = Array.from(peopleMap.values());
-        sortPeople(allPeople);
-        applyFilter('');
-
-        if (!allPeople.length) {
+        if (!res || !res.ok) {
           resultsEl.innerHTML = '';
           $('#nores').style.display = 'block';
           countPageEl.textContent = '';
-          setStatus('No active people found in CSV.', 'err');
+          lastUpdatedEl.textContent = 'People list unavailable.';
+          setStatus(res?.error || 'Failed to load people list.', 'err');
           return;
         }
 
-        setStatus(`Loaded ${allPeople.length} active people from CSV.`, 'ok');
+        allPeople = Array.isArray(res.rows)
+          ? res.rows.map(normalizePerson)
+          : [];
+
+        sortPeople(allPeople);
+        applyFilter('');
+
+        lastUpdatedEl.textContent = res.lastRefresh
+          ? `People list last updated: ${formatDateTime(res.lastRefresh)}`
+          : `Loaded ${allPeople.length} active people.`;
+
+        setStatus(`Loaded ${allPeople.length} active people.`, 'ok');
       } catch (err) {
         console.error(err);
         resultsEl.innerHTML = '';
         $('#nores').style.display = 'block';
         countPageEl.textContent = '';
-        setStatus(`Failed to load CSV list. ${err.message}`, 'err');
+        lastUpdatedEl.textContent = 'People list unavailable.';
+        setStatus(`Failed to load people list. ${err.message}`, 'err');
       }
     }
 
     function normalizePerson(p) {
       const id = String(p.id || '').trim();
-      const firstName = String(p.firstName || '').trim();
-      const lastName = String(p.lastName || '').trim();
-      const name = [firstName, lastName].filter(Boolean).join(' ').trim();
-      const displayName = [lastName, firstName].filter(Boolean).join(', ');
+      const firstName = String(p.first_name || p.firstName || '').trim();
+      const lastName = String(p.last_name || p.lastName || '').trim();
+      const displayName = String(p.name || [lastName, firstName].filter(Boolean).join(', ')).trim();
       return {
         id,
-        firstName,
-        lastName,
-        name,
-        displayName
+        first_name: firstName,
+        last_name: lastName,
+        name: displayName
       };
     }
 
     function sortPeople(arr) {
-      arr.sort((a, b) => a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }));
+      arr.sort((a, b) => String(a.name).localeCompare(String(b.name), undefined, { sensitivity: 'base' }));
     }
 
     function applyFilter(query) {
@@ -901,8 +841,9 @@
 
       filteredPeople = !q ? [...allPeople] : allPeople.filter(person => {
         const hay = [
-          person.displayName,
-          person.name
+          person.name,
+          person.first_name,
+          person.last_name
         ].join(' ').toLowerCase();
 
         return hay.includes(q);
@@ -932,7 +873,7 @@
         row.innerHTML = `
           <label for="${id}">
             <input type="checkbox" id="${id}" value="${escapeHtml(p.id)}" />
-            <span>${escapeHtml(p.displayName)}</span>
+            <span>${escapeHtml(toLastFirst(p.name))}</span>
           </label>
         `;
 
@@ -949,7 +890,7 @@
       selected.forEach(p => {
         const c = document.createElement('span');
         c.className = 'chip';
-        c.textContent = p.displayName;
+        c.textContent = toLastFirst(p.name);
         c.title = 'Click to remove';
         c.addEventListener('click', () => {
           selected.delete(String(p.id));
@@ -970,12 +911,16 @@
         return;
       }
 
-      const ids = Array.from(selected.keys());
+      const people = Array.from(selected.values()).map(p => ({
+        id: String(p.id),
+        name: String(p.name || '')
+      }));
+
       const note = noteEl.value.trim();
       const label = svcEl.value;
       const isoDate = attDateEl.value;
 
-      const ok = confirm(`Submit ${ids.length} attendee(s) for ${formatNiceDate(isoDate)}?`);
+      const ok = confirm(`Submit ${people.length} attendee(s) for ${formatNiceDate(isoDate)}?`);
       if (!ok) return;
 
       $('#submit').disabled = true;
@@ -984,7 +929,7 @@
       try {
         const res = await apiCall({
           action: 'submitAttendance',
-          personIds: ids,
+          people,
           noteText: note,
           label,
           isoDate
@@ -1008,6 +953,17 @@
         setStatus('Server error. See console.', 'err');
         alert('Server error. See console.');
       }
+    }
+
+    function toLastFirst(name) {
+      const s = String(name || '').trim();
+      if (!s) return '';
+      if (s.includes(',')) return s;
+      const parts = s.split(/\s+/);
+      if (parts.length === 1) return s;
+      const last = parts.pop();
+      const first = parts.join(' ');
+      return `${last}, ${first}`.replace(/^, |, $/g, '');
     }
 
     function escapeHtml(s) {
@@ -1039,7 +995,20 @@
       });
     }
 
-    loadCsvPeople();
+    function formatDateTime(value) {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return value;
+      return d.toLocaleString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
+
+    loadPeople(false);
   </script>
 </body>
 </html>
