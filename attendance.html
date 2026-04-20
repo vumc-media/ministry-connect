@@ -333,13 +333,11 @@
     .row label {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       cursor: pointer;
       width: 100%;
       color: var(--text);
     }
-
-    .row small { color: var(--muted); }
 
     .sub-toolbar {
       display: flex;
@@ -527,9 +525,9 @@
           <h2>How this works</h2>
           <ul>
             <li>The full list loads from your exported People CSV.</li>
+            <li>Only active people are shown.</li>
             <li>Names are displayed alphabetized by last name first.</li>
             <li>Check multiple names, then add them to the selected group.</li>
-            <li>Create a new visitor if they are not already in Planning Center.</li>
           </ul>
         </aside>
       </div>
@@ -608,17 +606,17 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwstyvtDh-XAQtxijZyuS1RfXkmjUeh5SZXBUwInD0yOjlHD3oSez3w1LAjRaMCletKw/exec";
-    const CSV_URL = "./versailles-united-methodist-church-export-1785356.csv";
+    const CSV_URL = "./vumc-4-20-2026.csv";
 
     const $ = s => document.querySelector(s);
-    const resultsEl  = $('#results');
+    const resultsEl = $('#results');
     const selectedEl = $('#selected');
-    const countEl    = $('#count');
-    const noteEl     = $('#note');
-    const svcEl      = $('#svc');
-    const qEl        = $('#q');
-    const attDateEl  = $('#attDate');
-    const statusEl   = $('#status');
+    const countEl = $('#count');
+    const noteEl = $('#note');
+    const svcEl = $('#svc');
+    const qEl = $('#q');
+    const attDateEl = $('#attDate');
+    const statusEl = $('#status');
     const countPageEl = $('#countPage');
 
     let selected = new Map();
@@ -651,11 +649,11 @@
       return JSON.parse(text);
     }
 
-    (function setDefaultDate(){
+    (function setDefaultDate() {
       const d = new Date();
       const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,'0');
-      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
       attDateEl.value = `${yyyy}-${mm}-${dd}`;
     })();
 
@@ -706,8 +704,8 @@
 
     function closeNewModal() {
       $('#newModal').style.display = 'none';
-      ['np_first','np_last','np_email','np_phone'].forEach(id => {
-        const el = $('#'+id);
+      ['np_first', 'np_last', 'np_email', 'np_phone'].forEach(id => {
+        const el = $('#' + id);
         if (el) el.value = '';
       });
     }
@@ -716,7 +714,7 @@
       if (!ensureScriptUrl()) return;
 
       const first = $('#np_first').value.trim();
-      const last  = $('#np_last').value.trim();
+      const last = $('#np_last').value.trim();
       const email = $('#np_email').value.trim();
       const phone = $('#np_phone').value.trim();
 
@@ -770,34 +768,6 @@
         setStatus('Server error creating person.', 'err');
         alert('Server error creating person. See console.');
       }
-    }
-
-    function parseCSVLine(line) {
-      const result = [];
-      let cur = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        const next = line[i + 1];
-
-        if (ch === '"') {
-          if (inQuotes && next === '"') {
-            cur += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === ',' && !inQuotes) {
-          result.push(cur);
-          cur = '';
-        } else {
-          cur += ch;
-        }
-      }
-
-      result.push(cur);
-      return result;
     }
 
     function parseCSV(text) {
@@ -859,13 +829,10 @@
           id: headers.indexOf('Person ID'),
           first: headers.indexOf('First Name'),
           last: headers.indexOf('Last Name'),
-          status: headers.indexOf('Status'),
-          homeEmail: headers.indexOf('Home Email'),
-          workEmail: headers.indexOf('Work Email'),
-          otherEmail: headers.indexOf('Other Email')
+          status: headers.indexOf('Status')
         };
 
-        if (idx.id === -1 || idx.first === -1 || idx.last === -1) {
+        if (idx.id === -1 || idx.first === -1 || idx.last === -1 || idx.status === -1) {
           throw new Error('Required CSV columns were not found.');
         }
 
@@ -875,20 +842,15 @@
           const id = String(cols[idx.id] || '').trim();
           const firstName = String(cols[idx.first] || '').trim();
           const lastName = String(cols[idx.last] || '').trim();
-          const status = idx.status > -1 ? String(cols[idx.status] || '').trim().toLowerCase() : '';
-          const email =
-            (idx.homeEmail > -1 ? String(cols[idx.homeEmail] || '').trim() : '') ||
-            (idx.workEmail > -1 ? String(cols[idx.workEmail] || '').trim() : '') ||
-            (idx.otherEmail > -1 ? String(cols[idx.otherEmail] || '').trim() : '');
+          const status = String(cols[idx.status] || '').trim().toLowerCase();
 
           if (!id || (!firstName && !lastName)) return;
-          if (status && status !== 'active') return;
+          if (status.toLowerCase() !== 'active') return;
 
           peopleMap.set(id, normalizePerson({
             id,
             firstName,
             lastName,
-            email,
             status
           }));
         });
@@ -926,8 +888,7 @@
         firstName,
         lastName,
         name,
-        displayName,
-        primary_email: String(p.email || '').trim()
+        displayName
       };
     }
 
@@ -941,8 +902,7 @@
       filteredPeople = !q ? [...allPeople] : allPeople.filter(person => {
         const hay = [
           person.displayName,
-          person.name,
-          person.primary_email
+          person.name
         ].join(' ').toLowerCase();
 
         return hay.includes(q);
@@ -973,7 +933,6 @@
           <label for="${id}">
             <input type="checkbox" id="${id}" value="${escapeHtml(p.id)}" />
             <span>${escapeHtml(p.displayName)}</span>
-            ${p.primary_email ? `<small>&nbsp;${escapeHtml(p.primary_email)}</small>` : ''}
           </label>
         `;
 
@@ -1053,21 +1012,31 @@
 
     function escapeHtml(s) {
       return String(s || '').replace(/[&<>"']/g, m => ({
-        '&':'&amp;',
-        '<':'&lt;',
-        '>':'&gt;',
-        '"':'&quot;',
-        "'":'&#39;'
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
       }[m]));
     }
 
     function formatNiceDate(iso) {
       if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-        return new Date().toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+        return new Date().toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
       }
-      const [Y,M,D] = iso.split('-').map(Number);
-      const d = new Date(Y, M-1, D, 12, 0, 0);
-      return d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+      const [Y, M, D] = iso.split('-').map(Number);
+      const d = new Date(Y, M - 1, D, 12, 0, 0);
+      return d.toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
     }
 
     loadCsvPeople();
